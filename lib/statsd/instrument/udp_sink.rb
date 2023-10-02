@@ -5,6 +5,8 @@ module StatsD
     # @note This class is part of the new Client implementation that is intended
     #   to become the new default in the next major release of this library.
     class UDPSink
+      THREAD_NAME = "StatsD::UDPSink"
+
       class << self
         def for_addr(addr)
           host, port_as_string = addr.split(":", 2)
@@ -16,7 +18,7 @@ module StatsD
 
       FINALIZER = ->(object_id) do
         Thread.list.each do |thread|
-          if (store = thread["StatsD::UDPSink"])
+          if (store = thread[THREAD_NAME])
             store.delete(object_id)&.close
           end
         end
@@ -69,7 +71,7 @@ module StatsD
       end
 
       def thread_store
-        Thread.current["StatsD::UDPSink"] ||= {}
+        Thread.current[THREAD_NAME] ||= {}
       end
     end
   end
