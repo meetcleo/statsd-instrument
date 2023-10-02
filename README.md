@@ -54,6 +54,7 @@ The following environment variables are supported:
   If your network is properly configured to handle larger packets you may try
   to increase this value for better performance, but most network can't handle
   larger packets.
+- `STATSD_PROMETHEUS_AUTH`:  The API key for the prometheus endpoint. If set, will send batch stats in prometheus-compatible format
 
 ## StatsD keys
 

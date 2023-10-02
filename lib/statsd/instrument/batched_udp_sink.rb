@@ -28,11 +28,12 @@ module StatsD
         port,
         thread_priority: DEFAULT_THREAD_PRIORITY,
         buffer_capacity: DEFAULT_BUFFER_CAPACITY,
-        max_packet_size: DEFAULT_MAX_PACKET_SIZE
+        max_packet_size: DEFAULT_MAX_PACKET_SIZE,
+        dispatcher: nil
       )
         @host = host
         @port = port
-        @dispatcher = Dispatcher.new(
+        @dispatcher = dispatcher || Dispatcher.new(
           host,
           port,
           buffer_capacity,

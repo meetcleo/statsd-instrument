@@ -5,8 +5,8 @@ module StatsD
     # @note This class is part of the new Client implementation that is intended
     #   to become the new default in the next major release of this library.
     class Dispatcher
-      def initialize(host, port, buffer_capacity, thread_priority, max_packet_size)
-        @udp_sink = UDPSink.new(host, port)
+      def initialize(host, port, buffer_capacity, thread_priority, max_packet_size, sink = nil)
+        @udp_sink = sink || UDPSink.new(host, port)
         @interrupted = false
         @thread_priority = thread_priority
         @max_packet_size = max_packet_size

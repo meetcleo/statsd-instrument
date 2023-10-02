@@ -94,6 +94,14 @@ module StatsD
         statsd_buffer_capacity > 0 && Float(env.fetch("STATSD_FLUSH_INTERVAL", 1.0)) > 0.0
       end
 
+      def prometheus?
+        prometheus_auth != nil
+      end
+
+      def prometheus_auth
+        env.fetch("STATSD_PROMETHEUS_AUTH", nil)
+      end
+
       def statsd_max_packet_size
         Float(env.fetch("STATSD_MAX_PACKET_SIZE", StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE))
       end
@@ -105,7 +113,14 @@ module StatsD
       def default_sink_for_environment
         case environment
         when "production", "staging"
-          if statsd_batching?
+          if prometheus?
+            StatsD::Instrument::Prometheus::BatchedPrometheusSink.for_addr(
+              statsd_addr,
+              buffer_capacity: statsd_buffer_capacity,
+              max_packet_size: statsd_max_packet_size,
+              auth_key: prometheus_auth,
+            )
+          elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(
               statsd_addr,
               buffer_capacity: statsd_buffer_capacity,
