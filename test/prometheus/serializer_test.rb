@@ -4,15 +4,22 @@ require "test_helper"
 
 module Prometheus
   class SerializerTest < Minitest::Test
-    def setup
-      @serializer = StatsD::Instrument::Prometheus::Serializer.new
+    def test_run_with_no_aggregations
+      serializer = described_class.new([::StatsD::Instrument::DogStatsDDatagram.new("foo:1|d|#foo,bar")])
+      output = serializer.run
+      decoded_output = ::Prometheus::WriteRequest.decode(output)
+      timeseries = decoded_output.timeseries
+      assert_equal(1, timeseries.length)
+
+      metric = timeseries[0]
+      assert_equal([::Prometheus::Label.new(name: "__name__", value: "foo")], metric.labels)
+      assert_equal(1, metric.samples[0]&.value)
     end
 
-    def test_run
-      assert_equal("foo", @serializer.send(:run, "foo"))
-      assert_equal("fo_o", @serializer.send(:run, "fo|o"))
-      assert_equal("fo_o", @serializer.send(:run, "fo@o"))
-      assert_equal("fo_o", @serializer.send(:run, "fo:o"))
+    private
+
+    def described_class
+      StatsD::Instrument::Prometheus::Serializer
     end
   end
 end
