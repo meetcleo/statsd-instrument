@@ -4,21 +4,30 @@ module StatsD
   module Instrument
     module Prometheus
       class BatchedPrometheusSink < ::StatsD::Instrument::BatchedUDPSink
+        class << self
+          def for_addr(addr, **kwargs)
+            new(addr, **kwargs)
+          end
+
+          def finalize(dispatcher)
+            proc { dispatcher.shutdown }
+          end
+        end
+
         def initialize(
-          host,
-          port,
+          addr,
           thread_priority: DEFAULT_THREAD_PRIORITY,
           buffer_capacity: DEFAULT_BUFFER_CAPACITY,
           max_packet_size: DEFAULT_MAX_PACKET_SIZE,
           auth_key:
         )
           dispatcher = Dispatcher.new(
-            host,
-            port,
+            nil,
+            nil,
             buffer_capacity,
             thread_priority,
             max_packet_size,
-            PrometheusSink.new(host, port, auth_key),
+            PrometheusSink.new(addr, auth_key),
           )
           super(
             host,

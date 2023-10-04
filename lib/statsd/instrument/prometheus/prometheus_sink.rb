@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'snappy'
 
 module StatsD
   module Instrument
@@ -8,25 +9,23 @@ module StatsD
 
         class << self
           def for_addr(addr)
-            host, port_as_string = addr.split(":", 2)
-            new(host, Integer(port_as_string))
+            new(addr)
           end
         end
 
-        attr_reader :host, :port
+        attr_reader :uri, :auth_key
 
         FINALIZER = ->(object_id) do
           Thread.list.each do |thread|
             if (store = thread[THREAD_NAME])
-              store.delete(object_id)&.close
+              store.delete(object_id)&.finish
             end
           end
         end
 
-        def initialize(host, port, auth_key)
+        def initialize(addr, auth_key)
           ObjectSpace.define_finalizer(self, FINALIZER)
-          @host = host
-          @port = port
+          @uri = URI(addr)
           @auth_key = auth_key
         end
 
@@ -37,8 +36,11 @@ module StatsD
         def <<(datagram)
           retried = false
           begin
-            socket.send(datagram, 0)
-          rescue SocketError, IOError, SystemCallError => error
+            response = make_request(datagram)
+            StatsD.logger.warn do
+              "[#{self.class.name}] Events were dropped because of response code from Prometheus: #{response.code}"
+            end unless response.code == '201'
+          rescue SocketError, IOError, SystemCallError, EOFError, Net::ReadTimeout => error
             StatsD.logger.debug do
               "[#{self.class.name}] Resetting connection because of #{error.class}: #{error.message}"
             end
@@ -57,15 +59,30 @@ module StatsD
 
         private
 
+        def request_body(datagram)
+          aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram).run
+          serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated).run
+          Snappy.deflate(serialized)
+        end
+
+        def make_request(datagram)
+          request = Net::HTTP::Post.new(uri.request_uri)
+          request['Authorization'] = "Bearer #{auth_key}"
+          request.body = request_body(datagram)
+          socket.request(request)
+        end
+
         def invalidate_socket
           socket = thread_store.delete(object_id)
-          socket&.close
+          socket&.finish
         end
 
         def socket
           thread_store[object_id] ||= begin
-            socket = UDPSocket.new
-            socket.connect(@host, @port)
+            socket = Net::HTTP.new(uri.host, uri.port)
+            socket.use_ssl = true
+            socket.set_debug_output($stdout) # TODO: remove
+            socket.start
             socket
           end
         end
