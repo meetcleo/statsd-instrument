@@ -5,8 +5,9 @@ module StatsD
     module Prometheus
       module Aggregators
         class Base
-          def initialize(datagrams)
+          def initialize(datagrams, **options)
             @datagrams = datagrams
+            @options = options
           end
 
           def aggregate
@@ -19,7 +20,7 @@ module StatsD
 
           private
 
-          attr_reader :datagrams
+          attr_reader :datagrams, :options
         end
       end
     end

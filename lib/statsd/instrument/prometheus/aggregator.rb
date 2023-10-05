@@ -4,8 +4,9 @@ module StatsD
   module Instrument
     module Prometheus
       class Aggregator
-        def initialize(datagrams)
+        def initialize(datagrams, percentiles = nil)
           @datagrams = datagrams
+          @percentiles = percentiles
         end
 
         def run
@@ -14,7 +15,7 @@ module StatsD
 
         private
 
-        attr_reader :datagrams
+        attr_reader :datagrams, :percentiles
 
         def datagrams_by_type_then_key
           datagrams.split.map do |datagram|
@@ -27,7 +28,7 @@ module StatsD
         def aggregated_datagrams
           datagrams_by_type_then_key.flat_map do |type, datagrams_by_key|
             datagrams_by_key.flat_map do |_, datagrams_for_key|
-              aggregation_class_for_type(type).new(datagrams_for_key).aggregate
+              aggregation_class_for_type(type).new(datagrams_for_key, percentiles: percentiles).aggregate
             end
           end
         end

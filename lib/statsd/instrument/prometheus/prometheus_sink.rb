@@ -13,7 +13,7 @@ module StatsD
           end
         end
 
-        attr_reader :uri, :auth_key
+        attr_reader :uri, :auth_key, :percentiles
 
         FINALIZER = ->(object_id) do
           Thread.list.each do |thread|
@@ -23,10 +23,11 @@ module StatsD
           end
         end
 
-        def initialize(addr, auth_key)
+        def initialize(addr, auth_key, percentiles)
           ObjectSpace.define_finalizer(self, FINALIZER)
           @uri = URI(addr)
           @auth_key = auth_key
+          @percentiles = percentiles
         end
 
         def sample?(sample_rate)
@@ -60,7 +61,7 @@ module StatsD
         private
 
         def request_body(datagram)
-          aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram).run
+          aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles).run
           serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated).run
           Snappy.deflate(serialized)
         end

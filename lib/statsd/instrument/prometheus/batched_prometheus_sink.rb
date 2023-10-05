@@ -19,7 +19,8 @@ module StatsD
           thread_priority: DEFAULT_THREAD_PRIORITY,
           buffer_capacity: DEFAULT_BUFFER_CAPACITY,
           max_packet_size: DEFAULT_MAX_PACKET_SIZE,
-          auth_key:
+          auth_key:,
+          percentiles:
         )
           dispatcher = Dispatcher.new(
             nil,
@@ -27,7 +28,7 @@ module StatsD
             buffer_capacity,
             thread_priority,
             max_packet_size,
-            PrometheusSink.new(addr, auth_key),
+            PrometheusSink.new(addr, auth_key, percentiles),
           )
           super(
             host,

@@ -102,6 +102,10 @@ module StatsD
         env.fetch("STATSD_PROMETHEUS_AUTH", nil)
       end
 
+      def prometheus_percentiles
+        env.fetch("STATSD_PROMETHEUS_PERCENTILES", "95,99").split(",").map(&:to_i)
+      end
+
       def statsd_max_packet_size
         Float(env.fetch("STATSD_MAX_PACKET_SIZE", StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE))
       end
@@ -119,6 +123,7 @@ module StatsD
               buffer_capacity: statsd_buffer_capacity,
               max_packet_size: statsd_max_packet_size,
               auth_key: prometheus_auth,
+              percentiles: prometheus_percentiles,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(
