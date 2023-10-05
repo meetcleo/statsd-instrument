@@ -30,6 +30,7 @@ module StatsD
         @interrupted = true
         @buffer.close
         if @dispatcher_thread&.alive?
+          @dispatcher_thread.wakeup
           @dispatcher_thread.join(wait)
         end
         flush(blocking: false)

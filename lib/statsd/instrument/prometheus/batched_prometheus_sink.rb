@@ -4,6 +4,9 @@ module StatsD
   module Instrument
     module Prometheus
       class BatchedPrometheusSink < ::StatsD::Instrument::BatchedUDPSink
+        # https://coralogix.com/docs/coralogix-endpoints/
+        DEFAULT_MAX_PACKET_SIZE = 1200000 # 1.2 MB
+
         class << self
           def for_addr(addr, **kwargs)
             new(addr, **kwargs)
@@ -22,7 +25,7 @@ module StatsD
           auth_key:,
           percentiles:
         )
-          dispatcher = Dispatcher.new(
+          dispatcher = PeriodicDispatcher.new(
             nil,
             nil,
             buffer_capacity,
