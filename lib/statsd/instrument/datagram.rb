@@ -64,6 +64,10 @@ module StatsD
 
       alias_method :==, :eql?
 
+      def key
+        [name, tags]
+      end
+
       private
 
       PARSER = %r{
