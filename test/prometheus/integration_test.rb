@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "webmock/minitest"
 
 module Prometheus
   class IntegrationTest < Minitest::Test
-    def setup
-      @server = UDPSocket.new
-      @server.bind("localhost", 0)
+    include ::PrometheusHelper
+    TEST_URL = "https://www.example.com/"
 
+    def setup
       @env = StatsD::Instrument::Environment.new(
-        "STATSD_ADDR" => "#{@server.addr[2]}:#{@server.addr[1]}",
+        "STATSD_ADDR" => TEST_URL,
         "STATSD_IMPLEMENTATION" => "dogstatsd",
         "STATSD_ENV" => "production",
         "STATSD_PROMETHEUS_AUTH" => "abc",
@@ -21,12 +22,27 @@ module Prometheus
 
     def teardown
       StatsD.singleton_client = @old_client
-      @server.close
     end
 
-    def test_live_local_udp_socket
+    def test_mocked_request
+      expected = {
+        timeseries: [
+          {
+            labels: [
+              { name: "__name__", value: "counter.total" },
+            ],
+            samples: [
+              { value: 1.0, timestamp: -1 },
+            ],
+            exemplars: [],
+          },
+        ],
+        metadata: [],
+      }
+      stub_request(:post, TEST_URL).to_return(status: 201)
       StatsD.increment("counter")
-      assert_equal("counter:1|c", @server.recvfrom(100).first)
+      StatsD.singleton_client.sink.shutdown
+      assert_request_contents(TEST_URL, expected, expected_headers: { "Authorization" => "Bearer abc" })
     end
   end
 end

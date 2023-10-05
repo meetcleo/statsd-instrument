@@ -12,14 +12,22 @@ module StatsD
           host, port_as_string = addr.split(":", 2)
           new(host, Integer(port_as_string))
         end
+
+        def close_socket(socket)
+          socket&.close
+        end
+
+        def thread_name
+          THREAD_NAME
+        end
       end
 
       attr_reader :host, :port
 
       FINALIZER = ->(object_id) do
         Thread.list.each do |thread|
-          if (store = thread[THREAD_NAME])
-            store.delete(object_id)&.close
+          if (store = thread[thread_name])
+            close_socket(store.delete(object_id))
           end
         end
       end
@@ -35,9 +43,18 @@ module StatsD
       end
 
       def <<(datagram)
+        invalidate_socket_and_retry_if_error do
+          socket.send(datagram, 0)
+        end
+        self
+      end
+
+      private
+
+      def invalidate_socket_and_retry_if_error
         retried = false
         begin
-          socket.send(datagram, 0)
+          yield
         rescue SocketError, IOError, SystemCallError => error
           StatsD.logger.debug do
             "[StatsD::Instrument::UDPSink] Resetting connection because of #{error.class}: #{error.message}"
@@ -52,26 +69,25 @@ module StatsD
             retry
           end
         end
-        self
       end
-
-      private
 
       def invalidate_socket
         socket = thread_store.delete(object_id)
-        socket&.close
+        self.class.close_socket(socket)
       end
 
       def socket
-        thread_store[object_id] ||= begin
-          socket = UDPSocket.new
-          socket.connect(@host, @port)
-          socket
-        end
+        thread_store[object_id] ||= build_socket
+      end
+
+      def build_socket
+        socket = UDPSocket.new
+        socket.connect(@host, @port)
+        socket
       end
 
       def thread_store
-        Thread.current[THREAD_NAME] ||= {}
+        Thread.current[self.class.thread_name] ||= {}
       end
     end
   end
