@@ -36,6 +36,15 @@ module Prometheus
             ],
             exemplars: [],
           },
+          {
+            labels: [
+              { name: "__name__", value: "metrics_since_last_flush" },
+            ],
+            samples: [
+              { value: 1.0, timestamp: -1 },
+            ],
+            exemplars: [],
+          },
         ],
         metadata: [],
       }

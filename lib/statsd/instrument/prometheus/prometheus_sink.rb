@@ -44,7 +44,8 @@ module StatsD
 
         def request_body(datagram)
           aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles).run
-          serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated).run
+          aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(aggregated).run
+          serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated_with_flush_stats).run
           Snappy.deflate(serialized)
         end
 
