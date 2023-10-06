@@ -23,7 +23,10 @@ module StatsD
           buffer_capacity: DEFAULT_BUFFER_CAPACITY,
           max_packet_size: DEFAULT_MAX_PACKET_SIZE,
           auth_key:,
-          percentiles:
+          percentiles:,
+          application_name:,
+          subsystem:,
+          default_tags:
         )
           dispatcher = PeriodicDispatcher.new(
             nil,
@@ -31,7 +34,7 @@ module StatsD
             buffer_capacity,
             thread_priority,
             max_packet_size,
-            PrometheusSink.new(addr, auth_key, percentiles),
+            PrometheusSink.new(addr, auth_key, percentiles, application_name, subsystem, default_tags),
           )
           super(
             host,

@@ -4,8 +4,9 @@ module StatsD
   module Instrument
     module Prometheus
       class FlushStats
-        def initialize(datagrams)
+        def initialize(datagrams, default_tags)
           @datagrams = datagrams
+          @default_tags = default_tags
         end
 
         def run
@@ -14,12 +15,9 @@ module StatsD
 
         private
 
-        attr_reader :datagrams
+        attr_reader :datagrams, :default_tags
 
         def flush_stats
-          env = StatsD::Instrument::Environment.current
-          default_tags = env.statsd_default_tags
-
           DogStatsDDatagram.new(
             DogStatsDDatagramBuilder.new(default_tags: default_tags).g(
               "metrics_since_last_flush",

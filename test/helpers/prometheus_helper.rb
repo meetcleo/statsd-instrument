@@ -7,6 +7,9 @@ module PrometheusHelper
       timeseries.samples.entries.each do |sample|
         sample.timestamp = -1 # Timecop not working for multithreaded stuff
       end
+      timeseries.labels.entries.each do |label|
+        label.value = "" if ["pid", "host"].include?(label.name) # These will vary per run/machine
+      end
     end
     result
   end

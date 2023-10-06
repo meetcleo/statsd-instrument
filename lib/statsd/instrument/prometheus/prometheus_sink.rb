@@ -21,13 +21,16 @@ module StatsD
           end
         end
 
-        attr_reader :uri, :auth_key, :percentiles
+        attr_reader :uri, :auth_key, :percentiles, :application_name, :subsystem, :default_tags
 
-        def initialize(addr, auth_key, percentiles) # rubocop:disable Lint/MissingSuper
+        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
           @uri = URI(addr)
           @auth_key = auth_key
           @percentiles = percentiles
+          @application_name = application_name
+          @subsystem = subsystem
+          @default_tags = default_tags
         end
 
         def <<(datagram)
@@ -44,8 +47,8 @@ module StatsD
 
         def request_body(datagram)
           aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles).run
-          aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(aggregated).run
-          serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated_with_flush_stats).run
+          aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(aggregated, default_tags).run
+          serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated_with_flush_stats, application_name, subsystem).run
           Snappy.deflate(serialized)
         end
 

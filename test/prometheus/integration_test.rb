@@ -14,7 +14,9 @@ module Prometheus
         "STATSD_IMPLEMENTATION" => "dogstatsd",
         "STATSD_ENV" => "production",
         "STATSD_PROMETHEUS_AUTH" => "abc",
-        "STATSD_DEFAULT_TAGS" => "__meta_applicationname:statsd_app,__meta_subsystem:statsd_sub",
+        "STATSD_DEFAULT_TAGS" => "env:test",
+        "STATSD_PROMETHEUS_APPLICATION_NAME" => "app-name",
+        "STATSD_PROMETHEUS_SUBSYSTEM" => "subsystem",
       )
 
       @old_client = StatsD.singleton_client
@@ -30,11 +32,13 @@ module Prometheus
         timeseries: [
           {
             labels: [
+              { name: "__meta_applicationname", value: "app-name" },
+              { name: "__meta_subsystem", value: "subsystem" },
+              { name: "host", value: "" },
+              { name: "pid", value: "" },
               { name: "__name__", value: "counter.total" },
               { name: "source", value: "App::Main::Controller" },
-              { name: "host", value: "localhost" },
-              { name: "__meta_applicationname", value: "statsd_app" },
-              { name: "__meta_subsystem", value: "statsd_sub" },
+              { name: "env", value: "test" },
             ],
             samples: [
               { value: 1.0, timestamp: -1 },
@@ -43,7 +47,12 @@ module Prometheus
           },
           {
             labels: [
+              { name: "__meta_applicationname", value: "app-name" },
+              { name: "__meta_subsystem", value: "subsystem" },
+              { name: "host", value: "" },
+              { name: "pid", value: "" },
               { name: "__name__", value: "metrics_since_last_flush" },
+              { name: "env", value: "test" },
             ],
             samples: [
               { value: 1.0, timestamp: -1 },
