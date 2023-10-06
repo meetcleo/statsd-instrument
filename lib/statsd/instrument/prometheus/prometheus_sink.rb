@@ -67,7 +67,6 @@ module StatsD
         def build_socket
           socket = Net::HTTP.new(uri.host, uri.port)
           socket.use_ssl = true
-          socket.set_debug_output($stdout) # TODO: remove
           socket.start
           socket
         end

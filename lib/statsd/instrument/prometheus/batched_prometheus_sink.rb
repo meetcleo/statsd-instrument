@@ -39,9 +39,9 @@ module StatsD
           super(
             host,
             port,
-            thread_priority: DEFAULT_THREAD_PRIORITY,
-            buffer_capacity: DEFAULT_BUFFER_CAPACITY,
-            max_packet_size: DEFAULT_MAX_PACKET_SIZE,
+            thread_priority: thread_priority,
+            buffer_capacity: buffer_capacity,
+            max_packet_size: max_packet_size,
             dispatcher: dispatcher
           )
         end

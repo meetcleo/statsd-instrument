@@ -17,14 +17,14 @@ module StatsD
         end
 
         def run
-          ::Prometheus::WriteRequest.encode(::Prometheus::WriteRequest.new(timeseries: stats, metadata: []))
+          ::Prometheus::WriteRequest.encode(::Prometheus::WriteRequest.new(timeseries: timeseries, metadata: []))
         end
 
         private
 
         attr_reader :datagrams, :current_time_ms, :pid, :hostname, :application_name, :subsystem
 
-        def stats
+        def timeseries
           datagrams.map do |datagram|
             ::Prometheus::TimeSeries.new(
               labels: labels_by_name(datagram).values,
