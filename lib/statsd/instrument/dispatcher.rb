@@ -18,7 +18,12 @@ module StatsD
 
       def <<(datagram)
         if !thread_healthcheck || !@buffer.push_nonblock(datagram)
-          # The buffer is full or the thread can't be respaned,
+
+          StatsD.logger.warn {
+            "[#{self.class.name}] Failed to buffer event, thread_healthcheck: #{thread_healthcheck}, buffer_closed? #{@buffer.closed?}, buffer_empty? #{@buffer.empty?}, buffer_size #{@buffer.size}, buffer_max #{@buffer.max}"
+          }
+
+          # The buffer is full or the thread can't be respawned,
           # we'll send the datagram synchronously
           @udp_sink << datagram
         end
@@ -40,10 +45,14 @@ module StatsD
 
       NEWLINE = "\n".b.freeze
 
+      def nothing_left_to_flush?(next_datagram)
+        @buffer.closed? && @buffer.empty? && next_datagram.nil?
+      end
+
       def flush(blocking:)
         packet = "".b
         next_datagram = nil
-        until @buffer.closed? && @buffer.empty? && next_datagram.nil?
+        until nothing_left_to_flush?(next_datagram)
           if blocking
             next_datagram ||= @buffer.pop
             break if next_datagram.nil? # queue was closed
@@ -106,7 +115,7 @@ module StatsD
 
       def report_error(error)
         StatsD.logger.error do
-          "[#{self.class.name}] The dispatcher thread encountered an error #{error.class}: #{error.message}"
+          "[#{self.class.name}] The dispatcher thread encountered an error #{error.class}: #{error.message}: #{error.backtrace}"
         end
       end
     end

@@ -32,6 +32,11 @@ module StatsD
           @buffer.size / @buffer.max.to_f > MAX_FILL_RATIO
         end
 
+        # Base behaviour flushes until shutdown, whereas we flush periodically
+        def nothing_left_to_flush?(_)
+          @buffer.empty?
+        end
+
         def dispatch
           last_flush = Time.now
           until @interrupted
