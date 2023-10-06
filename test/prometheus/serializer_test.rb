@@ -5,7 +5,11 @@ require "test_helper"
 module Prometheus
   class SerializerTest < Minitest::Test
     def test_run_with_no_aggregations
-      serializer = described_class.new([::StatsD::Instrument::DogStatsDDatagram.new("foo:1|d|#lab1:1,lab2:2,skipped")], nil, nil)
+      serializer = described_class.new(
+        [::StatsD::Instrument::DogStatsDDatagram.new("foo:1|d|#lab1:1,lab2:2,skipped")],
+        nil,
+        nil,
+      )
       output = serializer.run
       decoded_output = ::Prometheus::WriteRequest.decode(output)
       timeseries = decoded_output.timeseries

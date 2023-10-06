@@ -57,7 +57,7 @@ module Prometheus
         "foo.median:50.0|ms",
         "foo.count_90:18|c",
         "foo.count_95:19|c",
-        "foo.count:20|c"
+        "foo.count:20|c",
       ]
       assert_equal(expected, actual.map(&:source))
     end
@@ -75,7 +75,7 @@ module Prometheus
         "foo.sum_squares:61750.0|ms",
         "foo.mean:47.5|ms",
         "foo.median:50.0|ms",
-        "foo.count:20|c"
+        "foo.count:20|c",
       ]
       assert_equal(expected, actual.map(&:source))
     end

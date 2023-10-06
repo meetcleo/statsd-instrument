@@ -35,8 +35,10 @@ module StatsD
 
         def default_prometheus_labels
           @default_prometheus_labels ||= {}.tap do |labels|
-            labels["__meta_applicationname"] = ::Prometheus::Label.new(name: "__meta_applicationname", value: application_name) if application_name
-            labels["__meta_subsystem"] = ::Prometheus::Label.new(name: "__meta_subsystem", value: subsystem) if subsystem
+            labels["__meta_applicationname"] =
+              ::Prometheus::Label.new(name: "__meta_applicationname", value: application_name) if application_name
+            labels["__meta_subsystem"] =
+              ::Prometheus::Label.new(name: "__meta_subsystem", value: subsystem) if subsystem
             labels["host"] = ::Prometheus::Label.new(name: "host", value: hostname) if hostname
             labels["pid"] = ::Prometheus::Label.new(name: "pid", value: pid) if pid
           end

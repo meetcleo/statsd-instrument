@@ -19,9 +19,9 @@ module StatsD
       def <<(datagram)
         if !thread_healthcheck || !@buffer.push_nonblock(datagram)
 
-          StatsD.logger.warn {
+          StatsD.logger.warn do
             "[#{self.class.name}] Failed to buffer event, thread_healthcheck: #{thread_healthcheck}, buffer_closed? #{@buffer.closed?}, buffer_empty? #{@buffer.empty?}, buffer_size #{@buffer.size}, buffer_max #{@buffer.max}"
-          }
+          end
 
           # The buffer is full or the thread can't be respawned,
           # we'll send the datagram synchronously

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "snappy"
 
 module StatsD
@@ -48,7 +49,11 @@ module StatsD
         def request_body(datagram)
           aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles).run
           aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(aggregated, default_tags).run
-          serialized = StatsD::Instrument::Prometheus::Serializer.new(aggregated_with_flush_stats, application_name, subsystem).run
+          serialized = StatsD::Instrument::Prometheus::Serializer.new(
+            aggregated_with_flush_stats,
+            application_name,
+            subsystem,
+          ).run
           Snappy.deflate(serialized)
         end
 

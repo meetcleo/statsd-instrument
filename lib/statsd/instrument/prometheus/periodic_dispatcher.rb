@@ -53,7 +53,6 @@ module StatsD
             end
           end
 
-          last_flush = Time.now
           flush(blocking: false)
         end
       end
