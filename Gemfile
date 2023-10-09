@@ -11,3 +11,5 @@ gem "yard"
 gem "rubocop", ">= 1.0"
 gem "rubocop-shopify", require: false
 gem "benchmark-ips"
+gem "webmock"
+gem "pry"

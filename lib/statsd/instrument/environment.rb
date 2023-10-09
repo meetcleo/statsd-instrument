@@ -94,8 +94,40 @@ module StatsD
         statsd_buffer_capacity > 0 && Float(env.fetch("STATSD_FLUSH_INTERVAL", 1.0)) > 0.0
       end
 
+      def prometheus?
+        prometheus_auth != nil
+      end
+
+      def prometheus_auth
+        env.fetch("STATSD_PROMETHEUS_AUTH", nil)
+      end
+
+      def prometheus_application_name
+        env.fetch("STATSD_PROMETHEUS_APPLICATION_NAME", nil)
+      end
+
+      def prometheus_subsystem
+        env.fetch("STATSD_PROMETHEUS_SUBSYSTEM", nil)
+      end
+
+      def prometheus_percentiles
+        env.fetch("STATSD_PROMETHEUS_PERCENTILES", "95,99").split(",").map(&:to_i)
+      end
+
       def statsd_max_packet_size
         Float(env.fetch("STATSD_MAX_PACKET_SIZE", StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE))
+      end
+
+      def prometheus_open_timeout
+        Float(env.fetch("STATSD_PROMETHEUS_OPEN_TIMEOUT", "2")).to_i
+      end
+
+      def prometheus_read_timeout
+        Float(env.fetch("STATSD_PROMETHEUS_READ_TIMEOUT", "10")).to_i
+      end
+
+      def prometheus_write_timeout
+        Float(env.fetch("STATSD_PROMETHEUS_WRITE_TIMEOUT", "10")).to_i
       end
 
       def client
@@ -105,7 +137,21 @@ module StatsD
       def default_sink_for_environment
         case environment
         when "production", "staging"
-          if statsd_batching?
+          if prometheus?
+            StatsD::Instrument::Prometheus::BatchedPrometheusSink.for_addr(
+              statsd_addr,
+              buffer_capacity: statsd_buffer_capacity,
+              max_packet_size: statsd_max_packet_size,
+              auth_key: prometheus_auth,
+              percentiles: prometheus_percentiles,
+              application_name: prometheus_application_name,
+              subsystem: prometheus_subsystem,
+              default_tags: statsd_default_tags,
+              open_timeout: prometheus_open_timeout,
+              read_timeout: prometheus_read_timeout,
+              write_timeout: prometheus_write_timeout,
+            )
+          elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(
               statsd_addr,
               buffer_capacity: statsd_buffer_capacity,

@@ -12,6 +12,7 @@ require "mocha/minitest"
 require "statsd-instrument"
 
 require_relative "helpers/rubocop_helper"
+require_relative "helpers/prometheus_helper"
 
 module StatsD
   module Instrument

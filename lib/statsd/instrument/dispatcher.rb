@@ -1,0 +1,123 @@
+# frozen_string_literal: true
+
+module StatsD
+  module Instrument
+    # @note This class is part of the new Client implementation that is intended
+    #   to become the new default in the next major release of this library.
+    class Dispatcher
+      def initialize(host, port, buffer_capacity, thread_priority, max_packet_size, sink = nil)
+        @udp_sink = sink || UDPSink.new(host, port)
+        @interrupted = false
+        @thread_priority = thread_priority
+        @max_packet_size = max_packet_size
+        @buffer_capacity = buffer_capacity
+        @buffer = Buffer.new(buffer_capacity)
+        @dispatcher_thread = Thread.new { dispatch }
+        @pid = Process.pid
+      end
+
+      def <<(datagram)
+        if !thread_healthcheck || !@buffer.push_nonblock(datagram)
+
+          StatsD.logger.warn do
+            "[#{self.class.name}] Failed to buffer event, thread_healthcheck: #{thread_healthcheck}, buffer_closed? #{@buffer.closed?}, buffer_empty? #{@buffer.empty?}, buffer_size #{@buffer.size}, buffer_max #{@buffer.max}"
+          end
+
+          # The buffer is full or the thread can't be respawned,
+          # we'll send the datagram synchronously
+          @udp_sink << datagram
+        end
+
+        self
+      end
+
+      def shutdown(wait = 2)
+        @interrupted = true
+        @buffer.close
+        if @dispatcher_thread&.alive?
+          @dispatcher_thread.wakeup
+          @dispatcher_thread.join(wait)
+        end
+        flush(blocking: false)
+      end
+
+      private
+
+      NEWLINE = "\n".b.freeze
+
+      def nothing_left_to_flush?(next_datagram)
+        @buffer.closed? && @buffer.empty? && next_datagram.nil?
+      end
+
+      def flush(blocking:)
+        packet = "".b
+        next_datagram = nil
+        until nothing_left_to_flush?(next_datagram)
+          if blocking
+            next_datagram ||= @buffer.pop
+            break if next_datagram.nil? # queue was closed
+          else
+            next_datagram ||= @buffer.pop_nonblock
+            break if next_datagram.nil? # no datagram in buffer
+          end
+
+          packet << next_datagram
+          next_datagram = nil
+          if packet.bytesize <= @max_packet_size
+            while (next_datagram = @buffer.pop_nonblock)
+              if @max_packet_size - packet.bytesize - 1 > next_datagram.bytesize
+                packet << NEWLINE << next_datagram
+              else
+                break
+              end
+            end
+          end
+
+          @udp_sink << packet
+          packet.clear
+        end
+      end
+
+      def thread_healthcheck
+        # TODO: We have a race condition on JRuby / Truffle here. It could cause multiple
+        # dispatcher threads to be spawned, which would cause problems.
+        # However we can't simply lock here as we might be called from a trap context.
+        unless @dispatcher_thread&.alive?
+          # If the main the main thread is dead the VM is shutting down so we won't be able
+          # to spawn a new thread, so we fallback to sending our datagram directly.
+          return false unless Thread.main.alive?
+
+          # If the dispatcher thread is dead, it might be because the process was forked.
+          # So to avoid sending datagrams twice we clear the buffer.
+          if @pid != Process.pid
+            StatsD.logger.info { "[#{self.class.name}] Restarting the dispatcher thread after fork" }
+            @pid = Process.pid
+            @buffer.clear
+          else
+            StatsD.logger.info { "[#{self.class.name}] Restarting the dispatcher thread" }
+          end
+          @dispatcher_thread = Thread.new { dispatch }.tap { |t| t.priority = @thread_priority }
+        end
+        true
+      end
+
+      def dispatch
+        until @interrupted
+          begin
+            flush(blocking: true)
+          rescue => error
+            report_error(error)
+          end
+        end
+
+        flush(blocking: false)
+      end
+
+      def report_error(error)
+        StatsD.logger.error do
+          "[#{self.class.name}] The dispatcher thread encountered an error #{error.class}: #{error.message}: #{error.backtrace}"
+        end
+      end
+    end
+  end
+end
