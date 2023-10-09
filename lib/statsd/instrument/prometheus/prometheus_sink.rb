@@ -22,9 +22,17 @@ module StatsD
           end
         end
 
-        attr_reader :uri, :auth_key, :percentiles, :application_name, :subsystem, :default_tags
+        attr_reader :uri,
+          :auth_key,
+          :percentiles,
+          :application_name,
+          :subsystem,
+          :default_tags,
+          :open_timeout,
+          :read_timeout,
+          :write_timeout
 
-        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags) # rubocop:disable Lint/MissingSuper
+        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
           @uri = URI(addr)
           @auth_key = auth_key
@@ -32,6 +40,9 @@ module StatsD
           @application_name = application_name
           @subsystem = subsystem
           @default_tags = default_tags
+          @open_timeout = open_timeout
+          @read_timeout = read_timeout
+          @write_timeout = write_timeout
         end
 
         def <<(datagram)
@@ -66,6 +77,9 @@ module StatsD
 
         def build_socket
           socket = Net::HTTP.new(uri.host, uri.port)
+          socket.open_timeout = open_timeout
+          socket.read_timeout = read_timeout
+          socket.write_timeout = write_timeout
           socket.use_ssl = true
           socket.start
           socket

@@ -5,7 +5,7 @@ module StatsD
     module Prometheus
       class BatchedPrometheusSink < ::StatsD::Instrument::BatchedUDPSink
         # https://coralogix.com/docs/coralogix-endpoints/
-        DEFAULT_MAX_PACKET_SIZE = 1200000 # 1.2 MB
+        DEFAULT_MAX_PACKET_SIZE = 1_200_000 # 1.2 MB
 
         class << self
           def for_addr(addr, **kwargs)
@@ -26,7 +26,10 @@ module StatsD
           percentiles:,
           application_name:,
           subsystem:,
-          default_tags:
+          default_tags:,
+          open_timeout:,
+          read_timeout:,
+          write_timeout:
         )
           dispatcher = PeriodicDispatcher.new(
             nil,
@@ -34,7 +37,17 @@ module StatsD
             buffer_capacity,
             thread_priority,
             max_packet_size,
-            PrometheusSink.new(addr, auth_key, percentiles, application_name, subsystem, default_tags),
+            PrometheusSink.new(
+              addr,
+              auth_key,
+              percentiles,
+              application_name,
+              subsystem,
+              default_tags,
+              open_timeout,
+              read_timeout,
+              write_timeout,
+            ),
           )
           super(
             host,

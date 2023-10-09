@@ -118,6 +118,18 @@ module StatsD
         Float(env.fetch("STATSD_MAX_PACKET_SIZE", StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE))
       end
 
+      def prometheus_open_timeout
+        Float(env.fetch("STATSD_PROMETHEUS_OPEN_TIMEOUT", "2")).to_i
+      end
+
+      def prometheus_read_timeout
+        Float(env.fetch("STATSD_PROMETHEUS_READ_TIMEOUT", "10")).to_i
+      end
+
+      def prometheus_write_timeout
+        Float(env.fetch("STATSD_PROMETHEUS_WRITE_TIMEOUT", "10")).to_i
+      end
+
       def client
         StatsD::Instrument::Client.from_env(self)
       end
@@ -135,6 +147,9 @@ module StatsD
               application_name: prometheus_application_name,
               subsystem: prometheus_subsystem,
               default_tags: statsd_default_tags,
+              open_timeout: prometheus_open_timeout,
+              read_timeout: prometheus_read_timeout,
+              write_timeout: prometheus_write_timeout,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(

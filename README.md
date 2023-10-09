@@ -58,6 +58,9 @@ The following environment variables are supported:
 - `STATSD_PROMETHEUS_PERCENTILES`:  The percentiles that will be calulcated when aggregating timers for prometheus. 95,99 are the default.
 - `STATSD_PROMETHEUS_APPLICATION_NAME`:  The application name that will be included as a tag in all metrics sent to prometheus.
 - `STATSD_PROMETHEUS_SUBSYSTEM`:  The subsystem that will be included as a tag in all metrics sent to prometheus.
+- `STATSD_PROMETHEUS_OPEN_TIMEOUT`:  The timeout for connecting to the Prometheus backend (default is 2s).
+- `STATSD_PROMETHEUS_READ_TIMEOUT`:  The timeout for reading from the Prometheus backend (default is 10s).
+- `STATSD_PROMETHEUS_WRITE_TIMEOUT`:  The timeout for writing to the Prometheus backend (default is 10s).
 
 ## StatsD keys
 
