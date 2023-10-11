@@ -27,6 +27,23 @@ module Prometheus
       StatsD.singleton_client = @old_client
     end
 
+    def expected_metric(name, value, additional_labels: [])
+      {
+        labels: [
+          { name: "__meta_applicationname", value: "app-name" },
+          { name: "__meta_subsystem", value: "subsystem" },
+          { name: "host", value: "" },
+          { name: "pid", value: "" },
+          { name: "__name__", value: name },
+          { name: "env", value: "test" },
+        ] + additional_labels,
+        samples: [
+          { value: value, timestamp: -1 },
+        ],
+        exemplars: [],
+      }
+    end
+
     def test_mocked_request
       expected = {
         timeseries: [
@@ -45,62 +62,12 @@ module Prometheus
             ],
             exemplars: [],
           },
-          {
-            labels: [
-              { name: "__meta_applicationname", value: "app-name" },
-              { name: "__meta_subsystem", value: "subsystem" },
-              { name: "host", value: "" },
-              { name: "pid", value: "" },
-              { name: "__name__", value: "metrics_since_last_flush" },
-              { name: "env", value: "test" },
-            ],
-            samples: [
-              { value: 1.0, timestamp: -1 },
-            ],
-            exemplars: [],
-          },
-          {
-            labels: [
-              { name: "__meta_applicationname", value: "app-name" },
-              { name: "__meta_subsystem", value: "subsystem" },
-              { name: "host", value: "" },
-              { name: "pid", value: "" },
-              { name: "__name__", value: "pre_aggregation_number_of_metrics_since_last_flush" },
-              { name: "env", value: "test" },
-            ],
-            samples: [
-              { value: 2.0, timestamp: -1 },
-            ],
-            exemplars: [],
-          },
-          {
-            labels: [
-              { name: "__meta_applicationname", value: "app-name" },
-              { name: "__meta_subsystem", value: "subsystem" },
-              { name: "host", value: "" },
-              { name: "pid", value: "" },
-              { name: "__name__", value: "number_of_requests_attepted.total" },
-              { name: "env", value: "test" },
-            ],
-            samples: [
-              { value: 1.0, timestamp: -1 },
-            ],
-            exemplars: [],
-          },
-          {
-            labels: [
-              { name: "__meta_applicationname", value: "app-name" },
-              { name: "__meta_subsystem", value: "subsystem" },
-              { name: "host", value: "" },
-              { name: "pid", value: "" },
-              { name: "__name__", value: "number_of_requests_succeeded_upto_previous_flush.total" },
-              { name: "env", value: "test" },
-            ],
-            samples: [
-              { value: 0.0, timestamp: -1 },
-            ],
-            exemplars: [],
-          },
+          expected_metric("metrics_since_last_flush", 1.0),
+          expected_metric("pre_aggregation_number_of_metrics_since_last_flush", 2.0),
+          expected_metric("number_of_requests_attepted.total", 1.0),
+          expected_metric("number_of_requests_succeeded_upto_previous_flush.total", 0.0),
+          expected_metric("number_of_metrics_dropped_due_to_buffer_full.total", 0.0),
+          expected_metric("time_since_last_flush_initiated", -1),
         ],
         metadata: [],
       }

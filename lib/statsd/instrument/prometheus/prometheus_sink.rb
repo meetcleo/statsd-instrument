@@ -32,7 +32,9 @@ module StatsD
           :read_timeout,
           :write_timeout,
           :number_of_requests_attepted,
-          :number_of_requests_succeeded
+          :number_of_requests_succeeded,
+          :number_of_metrics_dropped_due_to_buffer_full,
+          :last_flush_initiated_time
 
         def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
@@ -47,9 +49,12 @@ module StatsD
           @write_timeout = write_timeout
           @number_of_requests_attepted = 0
           @number_of_requests_succeeded = 0
+          @number_of_metrics_dropped_due_to_buffer_full = 0
+          @last_flush_initiated_time = Time.now
         end
 
         def <<(datagram)
+          current_flush_initiated_time = Time.now
           invalidate_socket_and_retry_if_error do
             @number_of_requests_attepted += 1
             response = make_request(datagram)
@@ -61,11 +66,12 @@ module StatsD
               end
             end
           end
+          @last_flush_initiated_time = current_flush_initiated_time
           self
         end
 
         def failed_to_push!
-          # @number_of_metrics_dropped_due_to_buffer_full += 1
+          @number_of_metrics_dropped_due_to_buffer_full += 1
         end
 
         private
@@ -79,6 +85,8 @@ module StatsD
             aggregator.pre_aggregation_number_of_metrics,
             number_of_requests_attepted,
             number_of_requests_succeeded,
+            number_of_metrics_dropped_due_to_buffer_full,
+            last_flush_initiated_time,
           ).run
           serialized = StatsD::Instrument::Prometheus::Serializer.new(
             aggregated_with_flush_stats,
