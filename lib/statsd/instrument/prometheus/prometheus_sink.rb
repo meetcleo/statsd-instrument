@@ -64,6 +64,10 @@ module StatsD
           self
         end
 
+        def failed_to_push!
+          # @number_of_metrics_dropped_due_to_buffer_full += 1
+        end
+
         private
 
         def request_body(datagram)

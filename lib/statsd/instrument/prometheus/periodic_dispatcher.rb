@@ -13,17 +13,19 @@ module StatsD
         MAX_FILL_RATIO = 0.8 # Flush the buffer if it is over 80% full
 
         def <<(datagram)
-          result = super
+          if pushed?(datagram)
+            return self unless above_max_fill_ratio?
 
-          return result unless above_max_fill_ratio?
-
-          begin
-            @dispatcher_thread.wakeup
-          rescue => e
-            StatsD.logger.warn { "[#{self.class.name}] Failed to wakeup dispatcher thread with: #{e.message}" }
+            begin
+              @dispatcher_thread.wakeup
+            rescue => e
+              StatsD.logger.warn { "[#{self.class.name}] Failed to wakeup dispatcher thread with: #{e.message}" }
+            end
+          else
+            @udp_sink.failed_to_push!
           end
 
-          result
+          self
         end
 
         private
