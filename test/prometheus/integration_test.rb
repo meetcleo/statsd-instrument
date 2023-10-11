@@ -41,7 +41,7 @@ module Prometheus
               { name: "env", value: "test" },
             ],
             samples: [
-              { value: 1.0, timestamp: -1 },
+              { value: 2.0, timestamp: -1 },
             ],
             exemplars: [],
           },
@@ -59,10 +59,25 @@ module Prometheus
             ],
             exemplars: [],
           },
+          {
+            labels: [
+              { name: "__meta_applicationname", value: "app-name" },
+              { name: "__meta_subsystem", value: "subsystem" },
+              { name: "host", value: "" },
+              { name: "pid", value: "" },
+              { name: "__name__", value: "pre_aggregation_number_of_metrics_since_last_flush" },
+              { name: "env", value: "test" },
+            ],
+            samples: [
+              { value: 2.0, timestamp: -1 },
+            ],
+            exemplars: [],
+          },
         ],
         metadata: [],
       }
       stub_request(:post, TEST_URL).to_return(status: 201)
+      StatsD.increment("counter", tags: { source: "App::Main::Controller", host: "localhost" })
       StatsD.increment("counter", tags: { source: "App::Main::Controller", host: "localhost" })
       StatsD.singleton_client.sink.shutdown
       assert_request_contents(TEST_URL, expected, expected_headers: { "Authorization" => "Bearer abc" })

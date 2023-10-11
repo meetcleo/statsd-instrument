@@ -7,11 +7,14 @@ module StatsD
         def initialize(datagrams, percentiles = nil)
           @datagrams = datagrams
           @percentiles = percentiles
+          @pre_aggregation_number_of_metrics = 0
         end
 
         def run
           aggregated_datagrams.compact
         end
+
+        attr_reader :pre_aggregation_number_of_metrics
 
         private
 
@@ -19,6 +22,7 @@ module StatsD
 
         def datagrams_by_type_then_key
           datagrams.split.map do |datagram|
+            @pre_aggregation_number_of_metrics += 1
             DogStatsDDatagram.new(datagram)
           end.group_by(&:type).to_h do |type, parsed_datagrams|
             [type, parsed_datagrams.group_by(&:key).to_h]

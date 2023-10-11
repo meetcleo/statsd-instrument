@@ -58,8 +58,13 @@ module StatsD
         private
 
         def request_body(datagram)
-          aggregated = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles).run
-          aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(aggregated, default_tags).run
+          aggregator = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles)
+          aggregated = aggregator.run
+          aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(
+            aggregated,
+            default_tags,
+            aggregator.pre_aggregation_number_of_metrics,
+          ).run
           serialized = StatsD::Instrument::Prometheus::Serializer.new(
             aggregated_with_flush_stats,
             application_name,
