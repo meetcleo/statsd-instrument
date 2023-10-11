@@ -30,7 +30,9 @@ module StatsD
           :default_tags,
           :open_timeout,
           :read_timeout,
-          :write_timeout
+          :write_timeout,
+          :number_of_requests_attepted,
+          :number_of_requests_succeeded
 
         def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
@@ -43,14 +45,21 @@ module StatsD
           @open_timeout = open_timeout
           @read_timeout = read_timeout
           @write_timeout = write_timeout
+          @number_of_requests_attepted = 0
+          @number_of_requests_succeeded = 0
         end
 
         def <<(datagram)
           invalidate_socket_and_retry_if_error do
+            @number_of_requests_attepted += 1
             response = make_request(datagram)
-            StatsD.logger.warn do
-              "[#{self.class.name}] Events were dropped because of response code from Prometheus: #{response.code}"
-            end unless response.code == "201"
+            if response.code == "201"
+              @number_of_requests_succeeded += 1
+            else
+              StatsD.logger.warn do
+                "[#{self.class.name}] Events were dropped because of response code from Prometheus: #{response.code}"
+              end
+            end
           end
           self
         end
@@ -64,6 +73,8 @@ module StatsD
             aggregated,
             default_tags,
             aggregator.pre_aggregation_number_of_metrics,
+            number_of_requests_attepted,
+            number_of_requests_succeeded,
           ).run
           serialized = StatsD::Instrument::Prometheus::Serializer.new(
             aggregated_with_flush_stats,

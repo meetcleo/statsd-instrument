@@ -73,6 +73,34 @@ module Prometheus
             ],
             exemplars: [],
           },
+          {
+            labels: [
+              { name: "__meta_applicationname", value: "app-name" },
+              { name: "__meta_subsystem", value: "subsystem" },
+              { name: "host", value: "" },
+              { name: "pid", value: "" },
+              { name: "__name__", value: "number_of_requests_attepted.total" },
+              { name: "env", value: "test" },
+            ],
+            samples: [
+              { value: 1.0, timestamp: -1 },
+            ],
+            exemplars: [],
+          },
+          {
+            labels: [
+              { name: "__meta_applicationname", value: "app-name" },
+              { name: "__meta_subsystem", value: "subsystem" },
+              { name: "host", value: "" },
+              { name: "pid", value: "" },
+              { name: "__name__", value: "number_of_requests_succeeded_upto_previous_flush.total" },
+              { name: "env", value: "test" },
+            ],
+            samples: [
+              { value: 0.0, timestamp: -1 },
+            ],
+            exemplars: [],
+          },
         ],
         metadata: [],
       }
