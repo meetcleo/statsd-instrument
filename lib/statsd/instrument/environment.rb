@@ -130,6 +130,18 @@ module StatsD
         Float(env.fetch("STATSD_PROMETHEUS_WRITE_TIMEOUT", "10")).to_i
       end
 
+      def prometheus_seconds_to_sleep
+        Float(env.fetch("STATSD_PROMETHEUS_SECONDS_TO_SLEEP", "1.0")).to_f
+      end
+
+      def prometheus_seconds_between_flushes
+        Float(env.fetch("STATSD_PROMETHEUS_SECONDS_BETWEEN_FLUSHES", "60.0")).to_f
+      end
+
+      def prometheus_max_fill_ratio
+        Float(env.fetch("STATSD_PROMETHEUS_MAX_FILL_RATIO", "0.8")).to_f
+      end
+
       def client
         StatsD::Instrument::Client.from_env(self)
       end
@@ -150,6 +162,9 @@ module StatsD
               open_timeout: prometheus_open_timeout,
               read_timeout: prometheus_read_timeout,
               write_timeout: prometheus_write_timeout,
+              seconds_to_sleep: prometheus_seconds_to_sleep,
+              seconds_between_flushes: prometheus_seconds_between_flushes,
+              max_fill_ratio: prometheus_max_fill_ratio,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(

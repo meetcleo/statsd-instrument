@@ -61,6 +61,9 @@ The following environment variables are supported:
 - `STATSD_PROMETHEUS_OPEN_TIMEOUT`:  The timeout for connecting to the Prometheus backend (default is 2s).
 - `STATSD_PROMETHEUS_READ_TIMEOUT`:  The timeout for reading from the Prometheus backend (default is 10s).
 - `STATSD_PROMETHEUS_WRITE_TIMEOUT`:  The timeout for writing to the Prometheus backend (default is 10s).
+- `STATSD_PROMETHEUS_SECONDS_TO_SLEEP`:  The number of seconds to sleep between checks for needing to flush the buffer (default is 1).
+- `STATSD_PROMETHEUS_SECONDS_BETWEEN_FLUSHES`:  The maximum number of seconds to wait before flushing the buffer (default is 60).
+- `STATSD_PROMETHEUS_MAX_FILL_RATIO`:  The ratio of buffer size to max buffer size at which a flush will be triggered (default is 0.8).
 
 ## StatsD keys
 

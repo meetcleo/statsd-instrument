@@ -8,9 +8,13 @@ module StatsD
       # instance we don't own, we shouldn't slam their API, so this will
       # send if the buffer is filling up, or we haven't sent metrics for a minute
       class PeriodicDispatcher < ::StatsD::Instrument::Dispatcher
-        SECONDS_TO_SLEEP = 1 # Check if the buffer needs flushing every second
-        SECONDS_BETWEEN_FLUSHES = 60
-        MAX_FILL_RATIO = 0.8 # Flush the buffer if it is over 80% full
+        def initialize(host, port, buffer_capacity, thread_priority, max_packet_size, sink, seconds_to_sleep,
+          seconds_between_flushes, max_fill_ratio)
+          super(host, port, buffer_capacity, thread_priority, max_packet_size, sink)
+          @seconds_to_sleep = seconds_to_sleep
+          @seconds_between_flushes = seconds_between_flushes
+          @max_fill_ratio = max_fill_ratio
+        end
 
         def <<(datagram)
           if pushed?(datagram)
@@ -30,8 +34,10 @@ module StatsD
 
         private
 
+        attr_reader :seconds_to_sleep, :seconds_between_flushes, :max_fill_ratio
+
         def above_max_fill_ratio?
-          @buffer.size / @buffer.max.to_f > MAX_FILL_RATIO
+          @buffer.size / @buffer.max.to_f > max_fill_ratio
         end
 
         # Base behaviour flushes until shutdown, whereas we flush periodically
@@ -41,13 +47,13 @@ module StatsD
 
         def time_to_flush?(last_flush)
           seconds_since_last_flush = Time.now - last_flush
-          above_max_fill_ratio? || seconds_since_last_flush >= SECONDS_BETWEEN_FLUSHES
+          above_max_fill_ratio? || seconds_since_last_flush >= seconds_between_flushes
         end
 
         def dispatch
           last_flush = Time.now
           until @interrupted
-            sleep(SECONDS_TO_SLEEP)
+            sleep(seconds_to_sleep)
 
             next unless time_to_flush?(last_flush)
 
