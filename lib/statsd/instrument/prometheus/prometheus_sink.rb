@@ -31,7 +31,7 @@ module StatsD
           :open_timeout,
           :read_timeout,
           :write_timeout,
-          :number_of_requests_attepted,
+          :number_of_requests_attempted,
           :number_of_requests_succeeded,
           :number_of_metrics_dropped_due_to_buffer_full,
           :last_flush_initiated_time
@@ -47,7 +47,7 @@ module StatsD
           @open_timeout = open_timeout
           @read_timeout = read_timeout
           @write_timeout = write_timeout
-          @number_of_requests_attepted = 0
+          @number_of_requests_attempted = 0
           @number_of_requests_succeeded = 0
           @number_of_metrics_dropped_due_to_buffer_full = 0
           @last_flush_initiated_time = Time.now
@@ -56,7 +56,7 @@ module StatsD
         def <<(datagram)
           current_flush_initiated_time = Time.now
           invalidate_socket_and_retry_if_error do
-            @number_of_requests_attepted += 1
+            @number_of_requests_attempted += 1
             response = make_request(datagram)
             if response.code == "201"
               @number_of_requests_succeeded += 1
@@ -83,7 +83,7 @@ module StatsD
             aggregated,
             default_tags,
             aggregator.pre_aggregation_number_of_metrics,
-            number_of_requests_attepted,
+            number_of_requests_attempted,
             number_of_requests_succeeded,
             number_of_metrics_dropped_due_to_buffer_full,
             last_flush_initiated_time,

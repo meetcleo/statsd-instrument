@@ -64,7 +64,7 @@ module Prometheus
           },
           expected_metric("metrics_since_last_flush", 1.0),
           expected_metric("pre_aggregation_number_of_metrics_since_last_flush", 2.0),
-          expected_metric("number_of_requests_attepted.total", 1.0),
+          expected_metric("number_of_requests_attempted.total", 1.0),
           expected_metric("number_of_requests_succeeded_upto_previous_flush.total", 0.0),
           expected_metric("number_of_metrics_dropped_due_to_buffer_full.total", 0.0),
           expected_metric("time_since_last_flush_initiated", -1),

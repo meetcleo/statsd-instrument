@@ -4,12 +4,12 @@ module StatsD
   module Instrument
     module Prometheus
       class FlushStats
-        def initialize(datagrams, default_tags, pre_aggregation_number_of_metrics, number_of_requests_attepted,
+        def initialize(datagrams, default_tags, pre_aggregation_number_of_metrics, number_of_requests_attempted,
           number_of_requests_succeeded, number_of_metrics_dropped_due_to_buffer_full, last_flush_initiated_time)
           @datagrams = datagrams
           @default_tags = default_tags
           @pre_aggregation_number_of_metrics = pre_aggregation_number_of_metrics
-          @number_of_requests_attepted = number_of_requests_attepted
+          @number_of_requests_attempted = number_of_requests_attempted
           @number_of_requests_succeeded = number_of_requests_succeeded
           @number_of_metrics_dropped_due_to_buffer_full = number_of_metrics_dropped_due_to_buffer_full
           @last_flush_initiated_time = last_flush_initiated_time
@@ -24,7 +24,7 @@ module StatsD
         attr_reader :datagrams,
           :default_tags,
           :pre_aggregation_number_of_metrics,
-          :number_of_requests_attepted,
+          :number_of_requests_attempted,
           :number_of_requests_succeeded,
           :number_of_metrics_dropped_due_to_buffer_full,
           :last_flush_initiated_time
@@ -49,8 +49,8 @@ module StatsD
             ),
             DogStatsDDatagram.new(
               DogStatsDDatagramBuilder.new(default_tags: default_tags).c(
-                "number_of_requests_attepted.total",
-                number_of_requests_attepted,
+                "number_of_requests_attempted.total",
+                number_of_requests_attempted,
                 nil,
                 nil,
               ),
