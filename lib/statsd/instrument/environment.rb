@@ -115,7 +115,8 @@ module StatsD
       end
 
       def statsd_max_packet_size
-        Float(env.fetch("STATSD_MAX_PACKET_SIZE", StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE))
+        default_statsd_max_packet_size = prometheus? ? StatsD::Instrument::Prometheus::BatchedPrometheusSink::DEFAULT_MAX_PACKET_SIZE : StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE
+        Float(env.fetch("STATSD_MAX_PACKET_SIZE", default_statsd_max_packet_size))
       end
 
       def prometheus_open_timeout
