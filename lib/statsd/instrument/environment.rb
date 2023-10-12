@@ -115,7 +115,8 @@ module StatsD
       end
 
       def statsd_max_packet_size
-        Float(env.fetch("STATSD_MAX_PACKET_SIZE", StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE))
+        default_statsd_max_packet_size = prometheus? ? StatsD::Instrument::Prometheus::BatchedPrometheusSink::DEFAULT_MAX_PACKET_SIZE : StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE
+        Float(env.fetch("STATSD_MAX_PACKET_SIZE", default_statsd_max_packet_size))
       end
 
       def prometheus_open_timeout
@@ -128,6 +129,18 @@ module StatsD
 
       def prometheus_write_timeout
         Float(env.fetch("STATSD_PROMETHEUS_WRITE_TIMEOUT", "10")).to_i
+      end
+
+      def prometheus_seconds_to_sleep
+        Float(env.fetch("STATSD_PROMETHEUS_SECONDS_TO_SLEEP", "1.0")).to_f
+      end
+
+      def prometheus_seconds_between_flushes
+        Float(env.fetch("STATSD_PROMETHEUS_SECONDS_BETWEEN_FLUSHES", "60.0")).to_f
+      end
+
+      def prometheus_max_fill_ratio
+        Float(env.fetch("STATSD_PROMETHEUS_MAX_FILL_RATIO", "0.8")).to_f
       end
 
       def client
@@ -150,6 +163,9 @@ module StatsD
               open_timeout: prometheus_open_timeout,
               read_timeout: prometheus_read_timeout,
               write_timeout: prometheus_write_timeout,
+              seconds_to_sleep: prometheus_seconds_to_sleep,
+              seconds_between_flushes: prometheus_seconds_between_flushes,
+              max_fill_ratio: prometheus_max_fill_ratio,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(

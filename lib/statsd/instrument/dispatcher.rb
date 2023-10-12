@@ -17,16 +17,9 @@ module StatsD
       end
 
       def <<(datagram)
-        if !thread_healthcheck || !@buffer.push_nonblock(datagram)
-
-          StatsD.logger.warn do
-            "[#{self.class.name}] Failed to buffer event, thread_healthcheck: #{thread_healthcheck}, buffer_closed? #{@buffer.closed?}, buffer_empty? #{@buffer.empty?}, buffer_size #{@buffer.size}, buffer_max #{@buffer.max}"
-          end
-
-          # The buffer is full or the thread can't be respawned,
-          # we'll send the datagram synchronously
-          @udp_sink << datagram
-        end
+        # The buffer is full or the thread can't be respawned,
+        # we'll send the datagram synchronously
+        @udp_sink << datagram unless pushed?(datagram)
 
         self
       end
@@ -44,6 +37,17 @@ module StatsD
       private
 
       NEWLINE = "\n".b.freeze
+
+      def pushed?(datagram)
+        result = thread_healthcheck && @buffer.push_nonblock(datagram)
+        return result if result
+
+        StatsD.logger.warn do
+          "[#{self.class.name}] Failed to buffer event, thread_healthcheck: #{thread_healthcheck}, buffer_closed? #{@buffer.closed?}, buffer_empty? #{@buffer.empty?}, buffer_size #{@buffer.size}, buffer_max #{@buffer.max}"
+        end
+
+        result
+      end
 
       def nothing_left_to_flush?(next_datagram)
         @buffer.closed? && @buffer.empty? && next_datagram.nil?

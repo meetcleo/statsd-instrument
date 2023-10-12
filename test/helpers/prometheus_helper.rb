@@ -10,6 +10,9 @@ module PrometheusHelper
       timeseries.labels.entries.each do |label|
         label.value = "" if ["pid", "host"].include?(label.name) # These will vary per run/machine
       end
+      timeseries.samples.entries.each do |sample|
+        sample.value = -1 # Timecop not working for multithreaded stuff
+      end if timeseries.labels.entries.map(&:value).include?("time_since_last_flush_initiated")
     end
     result
   end
