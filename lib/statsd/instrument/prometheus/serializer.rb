@@ -6,6 +6,7 @@ module StatsD
       class Serializer
         # Colon separated, but allows double-colon values, e.g. name:value, name.1:value.1, name:Module1::Module2::Class
         LABEL_EXTRACTOR = /^(?<name>[^\:]+)\:(?<value>.+)$/
+        INVALID_NAME_CHARACTERS = /[^a-zA-Z0-9:_]/
 
         def initialize(datagrams, application_name, subsystem)
           @datagrams = datagrams
@@ -18,6 +19,12 @@ module StatsD
 
         def run
           ::Prometheus::WriteRequest.encode(::Prometheus::WriteRequest.new(timeseries: timeseries, metadata: []))
+        end
+
+        class << self
+          def cleanse_name(name)
+            name.gsub(INVALID_NAME_CHARACTERS, "_")
+          end
         end
 
         private
@@ -47,7 +54,7 @@ module StatsD
         # This will prevent dup labels
         def labels_by_name(datagram)
           labels = default_prometheus_labels.clone
-          labels["__name__"] = ::Prometheus::Label.new(name: "__name__", value: datagram.name)
+          labels["__name__"] = ::Prometheus::Label.new(name: "__name__", value: self.class.cleanse_name(datagram.name))
           return labels unless datagram.tags
 
           extracted_labels_from_tags = datagram.tags.map do |tag|
