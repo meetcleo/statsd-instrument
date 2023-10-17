@@ -32,7 +32,8 @@ module StatsD
           write_timeout:,
           seconds_to_sleep:,
           seconds_between_flushes:,
-          max_fill_ratio:
+          max_fill_ratio:,
+          basic_auth_user:
         )
           dispatcher = PeriodicDispatcher.new(
             nil,
@@ -50,6 +51,7 @@ module StatsD
               open_timeout,
               read_timeout,
               write_timeout,
+              basic_auth_user,
             ),
             seconds_to_sleep,
             seconds_between_flushes,

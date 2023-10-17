@@ -54,7 +54,8 @@ The following environment variables are supported:
   If your network is properly configured to handle larger packets you may try
   to increase this value for better performance, but most network can't handle
   larger packets.
-- `STATSD_PROMETHEUS_AUTH`:  The API key for the prometheus endpoint. If set, will send batch stats in prometheus-compatible format
+- `STATSD_PROMETHEUS_AUTH`:  The API key (or password for basic auth) for the prometheus endpoint. If set, will send batch stats in prometheus-compatible format
+- `STATSD_PROMETHEUS_BASIC_AUTH_USER`:  The user to use if basic auth is required.
 - `STATSD_PROMETHEUS_PERCENTILES`:  The percentiles that will be calulcated when aggregating timers for prometheus. 95,99 are the default.
 - `STATSD_PROMETHEUS_APPLICATION_NAME`:  The application name that will be included as a tag in all metrics sent to prometheus.
 - `STATSD_PROMETHEUS_SUBSYSTEM`:  The subsystem that will be included as a tag in all metrics sent to prometheus.
