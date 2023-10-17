@@ -102,6 +102,10 @@ module StatsD
         env.fetch("STATSD_PROMETHEUS_AUTH", nil)
       end
 
+      def prometheus_basic_auth_user
+        env.fetch("STATSD_PROMETHEUS_BASIC_AUTH_USER", nil)
+      end
+
       def prometheus_application_name
         env.fetch("STATSD_PROMETHEUS_APPLICATION_NAME", nil)
       end
@@ -166,6 +170,7 @@ module StatsD
               seconds_to_sleep: prometheus_seconds_to_sleep,
               seconds_between_flushes: prometheus_seconds_between_flushes,
               max_fill_ratio: prometheus_max_fill_ratio,
+              basic_auth_user: prometheus_basic_auth_user,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(

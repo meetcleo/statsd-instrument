@@ -62,18 +62,36 @@ module Prometheus
             ],
             exemplars: [],
           },
-          expected_metric("metrics_since_last_flush", 1.0),
-          expected_metric("pre_aggregation_number_of_metrics_since_last_flush", 2.0),
+          {
+            labels: [
+              { name: "__meta_applicationname", value: "app-name" },
+              { name: "__meta_subsystem", value: "subsystem" },
+              { name: "host", value: "" },
+              { name: "pid", value: "" },
+              { name: "__name__", value: "will_fail_total" },
+              { name: "source", value: "App::Main::Controller" },
+              { name: "env", value: "test" },
+            ],
+            samples: [
+              { value: 1.0, timestamp: -1 },
+            ],
+            exemplars: [],
+          },
+          expected_metric("metrics_since_last_flush", 2.0),
+          expected_metric("pre_aggregation_number_of_metrics_since_last_flush", 4.0),
           expected_metric("number_of_requests_attempted_total", 1.0),
           expected_metric("number_of_requests_succeeded_upto_previous_flush_total", 0.0),
           expected_metric("number_of_metrics_dropped_due_to_buffer_full_total", 0.0),
           expected_metric("time_since_last_flush_initiated", -1),
+          expected_metric("number_of_metrics_dropped_due_to_parsing_failure_total", 1.0),
         ],
         metadata: [],
       }
       stub_request(:post, TEST_URL).to_return(status: 201)
       StatsD.increment("counter", tags: { source: "App::Main::Controller", host: "localhost" })
       StatsD.increment("counter", tags: { source: "App::Main::Controller", host: "localhost" })
+      # Will treat the newline as its own metric that will fail to parse
+      StatsD.increment(":\nwill_fail", tags: { source: "App::Main::Controller", host: "localhost" })
       StatsD.singleton_client.sink.shutdown
       assert_request_contents(TEST_URL, expected, expected_headers: { "Authorization" => "Bearer abc" })
     end

@@ -8,13 +8,14 @@ module StatsD
           @datagrams = datagrams
           @percentiles = percentiles
           @pre_aggregation_number_of_metrics = 0
+          @number_of_metrics_failed_to_parse = 0
         end
 
         def run
           aggregated_datagrams.compact
         end
 
-        attr_reader :pre_aggregation_number_of_metrics
+        attr_reader :pre_aggregation_number_of_metrics, :number_of_metrics_failed_to_parse
 
         private
 
@@ -23,8 +24,8 @@ module StatsD
         def datagrams_by_type_then_key
           datagrams.split.map do |datagram|
             @pre_aggregation_number_of_metrics += 1
-            DogStatsDDatagram.new(datagram)
-          end.group_by(&:type).to_h do |type, parsed_datagrams|
+            try_parse_metric(datagram)
+          end.compact.group_by(&:type).to_h do |type, parsed_datagrams|
             [type, parsed_datagrams.group_by(&:key).to_h]
           end
         end
@@ -35,6 +36,15 @@ module StatsD
               aggregation_class_for_type(type).new(datagrams_for_key, percentiles: percentiles).aggregate
             end
           end
+        end
+
+        def try_parse_metric(datagram)
+          parsed_datagram = DogStatsDDatagram.new(datagram)
+          parsed_datagram.key # Need to access something on the datagram to trigger the parse
+          parsed_datagram
+        rescue ArgumentError
+          @number_of_metrics_failed_to_parse += 1
+          nil
         end
 
         def aggregation_class_for_type(type)

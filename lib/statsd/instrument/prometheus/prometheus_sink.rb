@@ -34,9 +34,10 @@ module StatsD
           :number_of_requests_attempted,
           :number_of_requests_succeeded,
           :number_of_metrics_dropped_due_to_buffer_full,
-          :last_flush_initiated_time
+          :last_flush_initiated_time,
+          :basic_auth_user
 
-        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout) # rubocop:disable Lint/MissingSuper
+        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout, basic_auth_user) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
           @uri = URI(addr)
           @auth_key = auth_key
@@ -51,6 +52,7 @@ module StatsD
           @number_of_requests_succeeded = 0
           @number_of_metrics_dropped_due_to_buffer_full = 0
           @last_flush_initiated_time = Time.now
+          @basic_auth_user = basic_auth_user
         end
 
         def <<(datagram)
@@ -58,7 +60,7 @@ module StatsD
           invalidate_socket_and_retry_if_error do
             @number_of_requests_attempted += 1
             response = make_request(datagram)
-            if response.code == "201"
+            if ["201", "200"].include?(response.code)
               @number_of_requests_succeeded += 1
             else
               StatsD.logger.warn do
@@ -87,6 +89,7 @@ module StatsD
             number_of_requests_succeeded,
             number_of_metrics_dropped_due_to_buffer_full,
             last_flush_initiated_time,
+            aggregator.number_of_metrics_failed_to_parse,
           ).run
           serialized = StatsD::Instrument::Prometheus::Serializer.new(
             aggregated_with_flush_stats,
@@ -98,7 +101,11 @@ module StatsD
 
         def make_request(datagram)
           request = Net::HTTP::Post.new(uri.request_uri)
-          request["Authorization"] = "Bearer #{auth_key}"
+          if basic_auth_user
+            request.basic_auth(basic_auth_user, auth_key)
+          else
+            request["Authorization"] = "Bearer #{auth_key}"
+          end
           request.body = request_body(datagram)
           socket.request(request)
         end
