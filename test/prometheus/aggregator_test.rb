@@ -15,6 +15,12 @@ module Prometheus
       assert_equal(14, aggregator.run.last.value)
     end
 
+    def test_run_with_failed_parse
+      aggregator = described_class.new("bar::1|c\nfoo:10|c\nfoo:1|c\nfoo:1|c\nfoo:2|c")
+      assert_equal(1, aggregator.run.length)
+      assert_equal(14, aggregator.run.last.value)
+    end
+
     def test_run_with_last_value
       aggregator = described_class.new("foo:10|g\nfoo:1|g\nfoo:1|g\nfoo:2|g")
       assert_equal(1, aggregator.run.length)

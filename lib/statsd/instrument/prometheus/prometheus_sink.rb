@@ -87,6 +87,7 @@ module StatsD
             number_of_requests_succeeded,
             number_of_metrics_dropped_due_to_buffer_full,
             last_flush_initiated_time,
+            aggregator.number_of_metrics_failed_to_parse,
           ).run
           serialized = StatsD::Instrument::Prometheus::Serializer.new(
             aggregated_with_flush_stats,
