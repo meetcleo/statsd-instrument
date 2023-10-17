@@ -10,10 +10,10 @@ module StatsD
       class PeriodicDispatcher < ::StatsD::Instrument::Dispatcher
         def initialize(host, port, buffer_capacity, thread_priority, max_packet_size, sink, seconds_to_sleep,
           seconds_between_flushes, max_fill_ratio)
-          super(host, port, buffer_capacity, thread_priority, max_packet_size, sink)
           @seconds_to_sleep = seconds_to_sleep
           @seconds_between_flushes = seconds_between_flushes
           @max_fill_ratio = max_fill_ratio
+          super(host, port, buffer_capacity, thread_priority, max_packet_size, sink)
         end
 
         def <<(datagram)
