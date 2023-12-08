@@ -56,6 +56,22 @@ module Prometheus
       assert_equal(expected, actual.map(&:source))
     end
 
+    def test_run_with_timer_and_percentiles_one_value
+      values = [5]
+      aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [90, 95])
+      assert_equal(6, aggregator.run.length)
+      actual = aggregator.run
+      expected = [
+        "foo.sum_90:5.0|ms",
+        "foo.sum_95:5.0|ms",
+        "foo.sum:5.0|ms",
+        "foo.count_90:1|c",
+        "foo.count_95:1|c",
+        "foo.count:1|c",
+      ]
+      assert_equal(expected, actual.map(&:source))
+    end
+
     def test_run_with_timer
       values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
       aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [])

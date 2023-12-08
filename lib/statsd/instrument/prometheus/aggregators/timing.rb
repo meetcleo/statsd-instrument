@@ -19,7 +19,23 @@ module StatsD
               cumulative_values.push(values[i] + cumulative_values[i - 1])
             end
 
-            sum = min
+            calculate_percentiles(count, cumulative_values, current_timer_data, current_timer_count_data)
+            calculate_base(count, cumulative_values, current_timer_data, current_timer_count_data)
+
+            last_datagram = datagrams.last
+            timer_data_to_datagrams(current_timer_data, last_datagram) + timer_count_data_to_datagrams(current_timer_count_data, last_datagram)
+          end
+
+          private
+
+          def calculate_base(count, cumulative_values, current_timer_data, current_timer_count_data)
+            sum = cumulative_values[count - 1]
+            current_timer_count_data["count"] = count.to_i
+            current_timer_data["sum"] = sum
+          end
+
+          def calculate_percentiles(count, cumulative_values, current_timer_data, current_timer_count_data)
+            sum = cumulative_values[0]
             percentiles.each do |percentile_threshold|
               count_within_percentile_threshold = count.to_f
 
@@ -39,13 +55,10 @@ module StatsD
               current_timer_count_data["count_" + clean_percentile_threshold] = count_within_percentile_threshold.to_i
               current_timer_data["sum_" + clean_percentile_threshold] = sum
             end
+          end
 
-            sum = cumulative_values[count - 1]
-            current_timer_count_data["count"] = count.to_i
-            current_timer_data["sum"] = sum
-
-            last_datagram = datagrams.last
-            output = current_timer_data.map do |name, value|
+          def timer_data_to_datagrams(current_timer_data, last_datagram)
+            current_timer_data.map do |name, value|
               DogStatsDDatagram.new(
                 DogStatsDDatagramBuilder.new.ms(
                   "#{last_datagram.name}.#{name}",
@@ -55,7 +68,10 @@ module StatsD
                 ),
               )
             end
-            output + current_timer_count_data.map do |name, value|
+          end
+
+          def timer_count_data_to_datagrams(current_timer_count_data, last_datagram)
+            current_timer_count_data.map do |name, value|
               DogStatsDDatagram.new(
                 DogStatsDDatagramBuilder.new.c(
                   "#{last_datagram.name}.#{name}",
@@ -66,8 +82,6 @@ module StatsD
               )
             end
           end
-
-          private
 
           def percentiles
             options[:percentiles] || []
