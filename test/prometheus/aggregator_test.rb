@@ -84,6 +84,40 @@ module Prometheus
       assert_equal(expected, actual.map(&:source))
     end
 
+    def test_run_with_timer_and_histograms
+      values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
+      aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [], [10, 30, 50, 90])
+      assert_equal(7, aggregator.run.length)
+      actual = aggregator.run
+      expected = [
+        "foo.sum:950.0|ms",
+        "foo.count:20|c",
+        "foo.bucket:3|c|#le:10",
+        "foo.bucket:7|c|#le:30",
+        "foo.bucket:11|c|#le:50",
+        "foo.bucket:19|c|#le:90",
+        "foo.bucket:20|c|#le:+Inf",
+      ]
+      assert_equal(expected, actual.map(&:source))
+    end
+
+    def test_run_with_timer_and_histograms_existing_tag
+      values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
+      aggregator = described_class.new(values.map { |value| "foo:#{value}|ms|#host:abc" }.join("\n"), [], [10, 30, 50, 90])
+      assert_equal(7, aggregator.run.length)
+      actual = aggregator.run
+      expected = [
+        "foo.sum:950.0|ms|#host:abc",
+        "foo.count:20|c|#host:abc",
+        "foo.bucket:3|c|#host:abc,le:10",
+        "foo.bucket:7|c|#host:abc,le:30",
+        "foo.bucket:11|c|#host:abc,le:50",
+        "foo.bucket:19|c|#host:abc,le:90",
+        "foo.bucket:20|c|#host:abc,le:+Inf",
+      ]
+      assert_equal(expected, actual.map(&:source))
+    end
+
     private
 
     def described_class

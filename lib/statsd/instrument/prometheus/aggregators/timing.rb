@@ -21,9 +21,12 @@ module StatsD
 
             calculate_percentiles(count, cumulative_values, current_timer_data, current_timer_count_data)
             calculate_base(count, cumulative_values, current_timer_data, current_timer_count_data)
+            current_timer_histogram_buckets = calculate_histograms(values)
 
             last_datagram = datagrams.last
-            timer_data_to_datagrams(current_timer_data, last_datagram) + timer_count_data_to_datagrams(current_timer_count_data, last_datagram)
+            timer_data_to_datagrams(current_timer_data, last_datagram) +
+              timer_count_data_to_datagrams(current_timer_count_data, last_datagram) +
+              timer_histogram_data_to_datagrams(current_timer_histogram_buckets, last_datagram)
           end
 
           private
@@ -36,7 +39,7 @@ module StatsD
 
           def calculate_percentiles(count, cumulative_values, current_timer_data, current_timer_count_data)
             sum = cumulative_values[0]
-            percentiles.each do |percentile_threshold|
+            percentiles.sort.each do |percentile_threshold|
               count_within_percentile_threshold = count.to_f
 
               if count > 1
@@ -55,6 +58,14 @@ module StatsD
               current_timer_count_data["count_" + clean_percentile_threshold] = count_within_percentile_threshold.to_i
               current_timer_data["sum_" + clean_percentile_threshold] = sum
             end
+          end
+
+          def calculate_histograms(values)
+            result = histograms.sort.each_with_object({}) do |bucket, current_timer_histograms|
+              current_timer_histograms[bucket] = values.select { |value| value <= bucket }.count
+            end
+            result["+Inf"] = values.count if histograms.any?
+            result
           end
 
           def timer_data_to_datagrams(current_timer_data, last_datagram)
@@ -83,8 +94,25 @@ module StatsD
             end
           end
 
+          def timer_histogram_data_to_datagrams(current_timer_histogram_buckets, last_datagram)
+            current_timer_histogram_buckets.map do |bucket, value|
+              DogStatsDDatagram.new(
+                DogStatsDDatagramBuilder.new.c(
+                  "#{last_datagram.name}.bucket",
+                  value,
+                  last_datagram.sample_rate,
+                  (last_datagram.tags || []) + ["le:#{bucket}"],
+                ),
+              )
+            end
+          end
+
           def percentiles
             options[:percentiles] || []
+          end
+
+          def histograms
+            options[:histograms] || []
           end
         end
       end

@@ -35,9 +35,10 @@ module StatsD
           :number_of_requests_succeeded,
           :number_of_metrics_dropped_due_to_buffer_full,
           :last_flush_initiated_time,
-          :basic_auth_user
+          :basic_auth_user,
+          :histograms
 
-        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout, basic_auth_user) # rubocop:disable Lint/MissingSuper
+        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout, basic_auth_user, histograms) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
           @uri = URI(addr)
           @auth_key = auth_key
@@ -53,6 +54,7 @@ module StatsD
           @number_of_metrics_dropped_due_to_buffer_full = 0
           @last_flush_initiated_time = Time.now
           @basic_auth_user = basic_auth_user
+          @histograms = histograms
         end
 
         def <<(datagram)
@@ -79,7 +81,7 @@ module StatsD
         private
 
         def request_body(datagram)
-          aggregator = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles)
+          aggregator = StatsD::Instrument::Prometheus::Aggregator.new(datagram, percentiles, histograms)
           aggregated = aggregator.run
           aggregated_with_flush_stats = StatsD::Instrument::Prometheus::FlushStats.new(
             aggregated,

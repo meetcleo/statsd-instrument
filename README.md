@@ -57,6 +57,7 @@ The following environment variables are supported:
 - `STATSD_PROMETHEUS_AUTH`:  The API key (or password for basic auth) for the prometheus endpoint. If set, will send batch stats in prometheus-compatible format
 - `STATSD_PROMETHEUS_BASIC_AUTH_USER`:  The user to use if basic auth is required.
 - `STATSD_PROMETHEUS_PERCENTILES`:  The percentiles that will be calulcated when aggregating timers for prometheus. 95,99 are the default.
+- `STATSD_PROMETHEUS_HISTOGRAMS`:  The histogram buckets that will be used when aggregating timers for prometheus. Buckets are expected to be defined in milliseconds. 5,10,25,50,75,100,250,500,750,1000,2500,5000,7500,10000 are the default buckets.
 - `STATSD_PROMETHEUS_APPLICATION_NAME`:  The application name that will be included as a tag in all metrics sent to prometheus.
 - `STATSD_PROMETHEUS_SUBSYSTEM`:  The subsystem that will be included as a tag in all metrics sent to prometheus.
 - `STATSD_PROMETHEUS_OPEN_TIMEOUT`:  The timeout for connecting to the Prometheus backend (default is 2s).
