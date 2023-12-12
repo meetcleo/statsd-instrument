@@ -43,24 +43,12 @@ module Prometheus
     def test_run_with_timer_and_percentiles
       values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
       aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [90, 95])
-      assert_equal(18, aggregator.run.length)
+      assert_equal(6, aggregator.run.length)
       actual = aggregator.run
       expected = [
-        "foo.mean_90:42.5|ms",
-        "foo.upper_90:85.0|ms",
         "foo.sum_90:765.0|ms",
-        "foo.sum_squares_90:44625.0|ms",
-        "foo.mean_95:45.0|ms",
-        "foo.upper_95:90.0|ms",
         "foo.sum_95:855.0|ms",
-        "foo.sum_squares_95:52725.0|ms",
-        "foo.std:28.83140648667699|ms",
-        "foo.upper:95.0|ms",
-        "foo.lower:0.0|ms",
         "foo.sum:950.0|ms",
-        "foo.sum_squares:61750.0|ms",
-        "foo.mean:47.5|ms",
-        "foo.median:50.0|ms",
         "foo.count_90:18|c",
         "foo.count_95:19|c",
         "foo.count:20|c",
@@ -68,20 +56,64 @@ module Prometheus
       assert_equal(expected, actual.map(&:source))
     end
 
+    def test_run_with_timer_and_percentiles_one_value
+      values = [5]
+      aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [90, 95])
+      assert_equal(6, aggregator.run.length)
+      actual = aggregator.run
+      expected = [
+        "foo.sum_90:5.0|ms",
+        "foo.sum_95:5.0|ms",
+        "foo.sum:5.0|ms",
+        "foo.count_90:1|c",
+        "foo.count_95:1|c",
+        "foo.count:1|c",
+      ]
+      assert_equal(expected, actual.map(&:source))
+    end
+
     def test_run_with_timer
       values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
       aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [])
-      assert_equal(8, aggregator.run.length)
+      assert_equal(2, aggregator.run.length)
       actual = aggregator.run
       expected = [
-        "foo.std:28.83140648667699|ms",
-        "foo.upper:95.0|ms",
-        "foo.lower:0.0|ms",
         "foo.sum:950.0|ms",
-        "foo.sum_squares:61750.0|ms",
-        "foo.mean:47.5|ms",
-        "foo.median:50.0|ms",
         "foo.count:20|c",
+      ]
+      assert_equal(expected, actual.map(&:source))
+    end
+
+    def test_run_with_timer_and_histograms
+      values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
+      aggregator = described_class.new(values.map { |value| "foo:#{value}|ms" }.join("\n"), [], [10, 30, 50, 90])
+      assert_equal(7, aggregator.run.length)
+      actual = aggregator.run
+      expected = [
+        "foo.sum:950.0|ms",
+        "foo.count:20|c",
+        "foo.bucket:3|c|#le:10",
+        "foo.bucket:7|c|#le:30",
+        "foo.bucket:11|c|#le:50",
+        "foo.bucket:19|c|#le:90",
+        "foo.bucket:20|c|#le:+Inf",
+      ]
+      assert_equal(expected, actual.map(&:source))
+    end
+
+    def test_run_with_timer_and_histograms_existing_tag
+      values = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
+      aggregator = described_class.new(values.map { |value| "foo:#{value}|ms|#host:abc" }.join("\n"), [], [10, 30, 50, 90])
+      assert_equal(7, aggregator.run.length)
+      actual = aggregator.run
+      expected = [
+        "foo.sum:950.0|ms|#host:abc",
+        "foo.count:20|c|#host:abc",
+        "foo.bucket:3|c|#host:abc,le:10",
+        "foo.bucket:7|c|#host:abc,le:30",
+        "foo.bucket:11|c|#host:abc,le:50",
+        "foo.bucket:19|c|#host:abc,le:90",
+        "foo.bucket:20|c|#host:abc,le:+Inf",
       ]
       assert_equal(expected, actual.map(&:source))
     end

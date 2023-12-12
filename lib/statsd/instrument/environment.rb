@@ -118,6 +118,10 @@ module StatsD
         env.fetch("STATSD_PROMETHEUS_PERCENTILES", "95,99").split(",").map(&:to_i)
       end
 
+      def prometheus_histograms
+        env.fetch("STATSD_PROMETHEUS_HISTOGRAMS", "5,10,25,50,75,100,250,500,750,1000,2500,5000,7500,10000").split(",").map(&:to_i)
+      end
+
       def statsd_max_packet_size
         default_statsd_max_packet_size = prometheus? ? StatsD::Instrument::Prometheus::BatchedPrometheusSink::DEFAULT_MAX_PACKET_SIZE : StatsD::Instrument::BatchedUDPSink::DEFAULT_MAX_PACKET_SIZE
         Float(env.fetch("STATSD_MAX_PACKET_SIZE", default_statsd_max_packet_size))
@@ -171,6 +175,7 @@ module StatsD
               seconds_between_flushes: prometheus_seconds_between_flushes,
               max_fill_ratio: prometheus_max_fill_ratio,
               basic_auth_user: prometheus_basic_auth_user,
+              histograms: prometheus_histograms,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(

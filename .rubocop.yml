@@ -51,3 +51,6 @@ StatsD/MeasureAsDistArgument:
 
 StatsD/MetricPrefixArgument:
   Enabled: true
+
+Layout/LineLength:
+  Enabled: false
