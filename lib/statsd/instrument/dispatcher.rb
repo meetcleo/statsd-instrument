@@ -49,14 +49,15 @@ module StatsD
         result
       end
 
-      def nothing_left_to_flush?(next_datagram)
+      def nothing_left_to_flush?(next_datagram, _)
         @buffer.closed? && @buffer.empty? && next_datagram.nil?
       end
 
       def flush(blocking:)
         packet = "".b
         next_datagram = nil
-        until nothing_left_to_flush?(next_datagram)
+        flushed = false
+        until nothing_left_to_flush?(next_datagram, flushed)
           if blocking
             next_datagram ||= @buffer.pop
             break if next_datagram.nil? # queue was closed
@@ -79,6 +80,7 @@ module StatsD
 
           @udp_sink << packet
           packet.clear
+          flushed = true
         end
       end
 
