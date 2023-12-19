@@ -41,8 +41,14 @@ module StatsD
         end
 
         # Base behaviour flushes until shutdown, whereas we flush periodically
-        def nothing_left_to_flush?(_)
-          @buffer.empty?
+        def nothing_left_to_flush?(next_datagram, flushed)
+          # Why we might stop flushing:
+          # 1. There's no more datagrams in the buffer
+          # 2. There's datagrams in the buffer, but we know they came into the buffer
+          #    after we flushed it: (no next datagram found, and we get the `flushed` flag)
+          #    We want to stop flushing in this case as too much flushing prevents proper
+          #    aggregation and blows up our metrics.
+          @buffer.empty? || (next_datagram.nil? && flushed)
         end
 
         def time_to_flush?(last_flush)
