@@ -6,6 +6,7 @@ module StatsD
     #   to become the new default in the next major release of this library.
     class DatagramBuilder
       SINGLE_COLON_REGEXP = /\b:\b/.freeze
+      INVALID_TAG_CHARS_REGEXP = /[|,\s]/.freeze
       REPLACEMENT_CHAR = "_"
       class << self
         def unsupported_datagram_types(*types)
@@ -73,11 +74,7 @@ module StatsD
         return [] unless tags
 
         tags = tags.map { |k, v| "#{k.to_s.gsub(SINGLE_COLON_REGEXP, REPLACEMENT_CHAR)}:#{v.to_s.gsub(SINGLE_COLON_REGEXP, REPLACEMENT_CHAR)}" } if tags.is_a?(Hash)
-
-        # Fast path when no string replacement is needed
-        return tags unless tags.any? { |tag| /[|, ]/.match?(tag) }
-
-        tags.map { |tag| tag.tr("|, ", REPLACEMENT_CHAR) }
+        tags.map { |tag| tag.to_s.gsub(INVALID_TAG_CHARS_REGEXP, REPLACEMENT_CHAR) }
       end
 
       # Utility function to remove invalid characters from a StatsD metric name
