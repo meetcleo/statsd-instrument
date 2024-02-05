@@ -15,11 +15,15 @@ class DatagramBuilderTest < Minitest::Test
   end
 
   def test_normalize_unsupported_tag_names
-    assert_equal(["ign#ored"], @datagram_builder.send(:normalize_tags, ["ign#o|re,d"]))
+    assert_equal(["ign#o_re_d"], @datagram_builder.send(:normalize_tags, ["ign#o|re,d"]))
     # NOTE: how this is interpreted by the backend is undefined.
     # We rely on the user to not do stuff like this if they don't want to be surprised.
     # We do not want to take the performance hit of normalizing this.
     assert_equal(["lol::class:omg::lol"], @datagram_builder.send(:normalize_tags, "lol::class" => "omg::lol"))
+    # Funnily enough, double colons are fine, but single colons break things
+    assert_equal(["lol_class:omg_lol"], @datagram_builder.send(:normalize_tags, "lol:class" => "omg:lol"))
+    # Spaces also break things
+    assert_equal(["lol_class:omg_lol"], @datagram_builder.send(:normalize_tags, "lol class" => "omg lol"))
   end
 
   def test_normalize_tags_converts_hash_to_array
@@ -113,6 +117,6 @@ class DatagramBuilderTest < Minitest::Test
     # Default tags are also normalized
     datagram_builder = StatsD::Instrument::DatagramBuilder.new(default_tags: ["f,o|o"])
     datagram = datagram_builder.c("bar", 1, nil, nil)
-    assert_equal("bar:1|c|#foo", datagram)
+    assert_equal("bar:1|c|#f_o_o", datagram)
   end
 end
