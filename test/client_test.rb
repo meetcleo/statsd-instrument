@@ -196,9 +196,9 @@ class ClientTest < Minitest::Test
       client.increment("bar", tags: ["th|ird_#,tag"])
     end
 
-    assert_includes(datagrams.first.tags, "first_tag:first_value")
-    assert_includes(datagrams.first.tags, "second_tag:second_value")
-    assert_includes(datagrams.first.tags, "third_#tag")
+    assert_includes(datagrams.first.tags, "first_tag:f_irst_value")
+    assert_includes(datagrams.first.tags, "second_tag:sec_ond_value")
+    assert_includes(datagrams.first.tags, "th_ird_#_tag")
   end
 
   def test_sampling

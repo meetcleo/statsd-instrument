@@ -29,7 +29,7 @@ class DogStatsDDatagramBuilderTest < Minitest::Test
       tags: { foo: "bar|baz" },
       message: "blah",
     )
-    assert_equal("_sc|service|1|h:localhost|d:1569817332|#foo:barbaz|m:blah", datagram)
+    assert_equal("_sc|service|1|h:localhost|d:1569817332|#foo:bar_baz|m:blah", datagram)
 
     parsed_datagram = StatsD::Instrument::DogStatsDDatagramBuilder.datagram_class.new(datagram)
     assert_equal(:_sc, parsed_datagram.type)
@@ -37,7 +37,7 @@ class DogStatsDDatagramBuilderTest < Minitest::Test
     assert_equal(1, parsed_datagram.value)
     assert_equal("localhost", parsed_datagram.hostname)
     assert_equal(Time.parse("2019-09-30T04:22:12Z"), parsed_datagram.timestamp)
-    assert_equal(["foo:barbaz"], parsed_datagram.tags)
+    assert_equal(["foo:bar_baz"], parsed_datagram.tags)
     assert_equal("blah", parsed_datagram.message)
   end
 
@@ -65,7 +65,7 @@ class DogStatsDDatagramBuilderTest < Minitest::Test
     )
     assert_equal(
       '_e{7,13}:testing|with\\nnewline|h:localhost|d:1569817332|k:my-key|' \
-        "p:low|s:source|t:success|#foo:barbaz",
+        "p:low|s:source|t:success|#foo:bar_baz",
       datagram,
     )
 
@@ -75,7 +75,7 @@ class DogStatsDDatagramBuilderTest < Minitest::Test
     assert_equal("with\nnewline", parsed_datagram.value)
     assert_equal("localhost", parsed_datagram.hostname)
     assert_equal(Time.parse("2019-09-30T04:22:12Z"), parsed_datagram.timestamp)
-    assert_equal(["foo:barbaz"], parsed_datagram.tags)
+    assert_equal(["foo:bar_baz"], parsed_datagram.tags)
     assert_equal("my-key", parsed_datagram.aggregation_key)
     assert_equal("low", parsed_datagram.priority)
     assert_equal("source", parsed_datagram.source_type_name)
