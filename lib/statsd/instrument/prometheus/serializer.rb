@@ -11,8 +11,7 @@ module StatsD
         def initialize(datagrams, application_name, subsystem)
           @datagrams = datagrams
           @current_time_ms = (Time.now.to_f * 1000).to_i
-          @pid = Process.pid&.to_s
-          @hostname = Socket.gethostname
+          @hostname = nil #TODO
           @application_name = application_name
           @subsystem = subsystem
         end
@@ -29,7 +28,7 @@ module StatsD
 
         private
 
-        attr_reader :datagrams, :current_time_ms, :pid, :hostname, :application_name, :subsystem
+        attr_reader :datagrams, :current_time_ms, :hostname, :application_name, :subsystem
 
         def timeseries
           datagrams.map do |datagram|
@@ -47,7 +46,6 @@ module StatsD
             labels["__meta_subsystem"] =
               ::Prometheus::Label.new(name: "__meta_subsystem", value: subsystem) if subsystem
             labels["host"] = ::Prometheus::Label.new(name: "host", value: hostname) if hostname
-            labels["pid"] = ::Prometheus::Label.new(name: "pid", value: pid) if pid
           end
         end
 
