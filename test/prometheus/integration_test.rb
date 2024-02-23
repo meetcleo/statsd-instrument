@@ -17,6 +17,7 @@ module Prometheus
         "STATSD_DEFAULT_TAGS" => "env:test",
         "STATSD_PROMETHEUS_APPLICATION_NAME" => "app-name",
         "STATSD_PROMETHEUS_SUBSYSTEM" => "subsystem",
+        "DYNO" => "web.1",
       )
 
       @old_client = StatsD.singleton_client
@@ -32,8 +33,7 @@ module Prometheus
         labels: [
           { name: "__meta_applicationname", value: "app-name" },
           { name: "__meta_subsystem", value: "subsystem" },
-          { name: "host", value: "" },
-          { name: "pid", value: "" },
+          { name: "dyno_number", value: "1" },
           { name: "__name__", value: name },
           { name: "env", value: "test" },
         ] + additional_labels,
@@ -51,8 +51,7 @@ module Prometheus
             labels: [
               { name: "__meta_applicationname", value: "app-name" },
               { name: "__meta_subsystem", value: "subsystem" },
-              { name: "host", value: "" },
-              { name: "pid", value: "" },
+              { name: "dyno_number", value: "1" },
               { name: "__name__", value: "counter_total" },
               { name: "source", value: "App::Main::Controller" },
               { name: "env", value: "test" },
@@ -66,8 +65,7 @@ module Prometheus
             labels: [
               { name: "__meta_applicationname", value: "app-name" },
               { name: "__meta_subsystem", value: "subsystem" },
-              { name: "host", value: "" },
-              { name: "pid", value: "" },
+              { name: "dyno_number", value: "1" },
               { name: "__name__", value: "will_fail_total" },
               { name: "source", value: "App::Main::Controller" },
               { name: "env", value: "test" },
@@ -88,10 +86,10 @@ module Prometheus
         metadata: [],
       }
       stub_request(:post, TEST_URL).to_return(status: 201)
-      StatsD.increment("counter", tags: { source: "App::Main::Controller", host: "localhost" })
-      StatsD.increment("counter", tags: { source: "App::Main::Controller", host: "localhost" })
+      StatsD.increment("counter", tags: { source: "App::Main::Controller", dyno_number: "1" })
+      StatsD.increment("counter", tags: { source: "App::Main::Controller", dyno_number: "1" })
       # Will treat the newline as its own metric that will fail to parse
-      StatsD.increment(":\nwill_fail", tags: { source: "App::Main::Controller", host: "localhost" })
+      StatsD.increment(":\nwill_fail", tags: { source: "App::Main::Controller", dyno_number: "1" })
       StatsD.singleton_client.sink.shutdown
       assert_request_contents(TEST_URL, expected, expected_headers: { "Authorization" => "Bearer abc" })
     end
