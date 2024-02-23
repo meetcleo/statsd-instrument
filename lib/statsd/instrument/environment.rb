@@ -94,6 +94,14 @@ module StatsD
         statsd_buffer_capacity > 0 && Float(env.fetch("STATSD_FLUSH_INTERVAL", 1.0)) > 0.0
       end
 
+      def hostname
+        heroku_dyno_environment_variable.split(".")[1]
+      end
+
+      def heroku_dyno_environment_variable
+        env.fetch("DYNO", "unknown.0")
+      end
+
       def prometheus?
         prometheus_auth != nil
       end
@@ -176,6 +184,7 @@ module StatsD
               max_fill_ratio: prometheus_max_fill_ratio,
               basic_auth_user: prometheus_basic_auth_user,
               histograms: prometheus_histograms,
+              hostname: hostname,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(

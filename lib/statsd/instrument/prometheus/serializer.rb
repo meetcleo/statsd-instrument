@@ -8,10 +8,10 @@ module StatsD
         LABEL_EXTRACTOR = /^(?<name>[^\:]+)\:(?<value>.+)$/
         INVALID_NAME_CHARACTERS = /[^a-zA-Z0-9:_]/
 
-        def initialize(datagrams, application_name, subsystem)
+        def initialize(datagrams, application_name, subsystem, hostname)
           @datagrams = datagrams
           @current_time_ms = (Time.now.to_f * 1000).to_i
-          @hostname = nil #TODO
+          @hostname = hostname
           @application_name = application_name
           @subsystem = subsystem
         end
