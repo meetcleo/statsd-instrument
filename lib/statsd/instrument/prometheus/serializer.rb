@@ -8,10 +8,10 @@ module StatsD
         LABEL_EXTRACTOR = /^(?<name>[^\:]+)\:(?<value>.+)$/
         INVALID_NAME_CHARACTERS = /[^a-zA-Z0-9:_]/
 
-        def initialize(datagrams, application_name, subsystem, hostname)
+        def initialize(datagrams, application_name, subsystem, dyno_number)
           @datagrams = datagrams
           @current_time_ms = (Time.now.to_f * 1000).to_i
-          @hostname = hostname
+          @dyno_number = dyno_number
           @application_name = application_name
           @subsystem = subsystem
         end
@@ -28,7 +28,7 @@ module StatsD
 
         private
 
-        attr_reader :datagrams, :current_time_ms, :hostname, :application_name, :subsystem
+        attr_reader :datagrams, :current_time_ms, :dyno_number, :application_name, :subsystem
 
         def timeseries
           datagrams.map do |datagram|
@@ -45,7 +45,7 @@ module StatsD
               ::Prometheus::Label.new(name: "__meta_applicationname", value: application_name) if application_name
             labels["__meta_subsystem"] =
               ::Prometheus::Label.new(name: "__meta_subsystem", value: subsystem) if subsystem
-            labels["host"] = ::Prometheus::Label.new(name: "host", value: hostname) if hostname
+            labels["dyno_number"] = ::Prometheus::Label.new(name: "dyno_number", value: dyno_number) if dyno_number
           end
         end
 
