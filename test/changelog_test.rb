@@ -32,6 +32,6 @@ class ChangelogTest < Minitest::Test
   end
 
   def changelog_headings
-    File.read("CHANGELOG.md").each_line.grep(/^#/).map(&:strip)
+    File.read("CHANGELOG.md", mode: "r:utf-8").each_line.grep(/^#/).map(&:strip)
   end
 end

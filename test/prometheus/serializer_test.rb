@@ -9,6 +9,7 @@ module Prometheus
         [::StatsD::Instrument::DogStatsDDatagram.new("foo:1|d|#lab1:1,lab2:2,skipped")],
         nil,
         nil,
+        nil,
       )
       output = serializer.run
       decoded_output = ::Prometheus::WriteRequest.decode(output)
@@ -16,7 +17,7 @@ module Prometheus
       assert_equal(1, timeseries.length)
 
       metric = timeseries[0]
-      assert_equal(["__name__", "host", "lab1", "lab2", "pid"].sort, metric.labels.map(&:name).sort)
+      assert_equal(["__name__", "lab1", "lab2"].sort, metric.labels.map(&:name).sort)
       assert_equal(
         [
           ::Prometheus::Label.new(name: "__name__", value: "foo"),

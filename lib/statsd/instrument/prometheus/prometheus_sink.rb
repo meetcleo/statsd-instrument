@@ -36,9 +36,10 @@ module StatsD
           :number_of_metrics_dropped_due_to_buffer_full,
           :last_flush_initiated_time,
           :basic_auth_user,
-          :histograms
+          :histograms,
+          :dyno_number
 
-        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout, basic_auth_user, histograms) # rubocop:disable Lint/MissingSuper
+        def initialize(addr, auth_key, percentiles, application_name, subsystem, default_tags, open_timeout, read_timeout, write_timeout, basic_auth_user, histograms, dyno_number) # rubocop:disable Lint/MissingSuper
           ObjectSpace.define_finalizer(self, FINALIZER)
           @uri = URI(addr)
           @auth_key = auth_key
@@ -55,6 +56,7 @@ module StatsD
           @last_flush_initiated_time = Time.now
           @basic_auth_user = basic_auth_user
           @histograms = histograms
+          @dyno_number = dyno_number
         end
 
         def <<(datagram)
@@ -97,6 +99,7 @@ module StatsD
             aggregated_with_flush_stats,
             application_name,
             subsystem,
+            dyno_number,
           ).run
           Snappy.deflate(serialized)
         end
