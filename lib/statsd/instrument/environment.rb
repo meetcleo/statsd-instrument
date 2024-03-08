@@ -102,6 +102,10 @@ module StatsD
         env.fetch("DYNO", "unknown.0")
       end
 
+      def worker_index
+        env.fetch("WORKER_INDEX", "0")
+      end
+
       def prometheus?
         prometheus_auth != nil
       end
@@ -185,6 +189,7 @@ module StatsD
               basic_auth_user: prometheus_basic_auth_user,
               histograms: prometheus_histograms,
               dyno_number: dyno_number,
+              worker_index: worker_index,
             )
           elsif statsd_batching?
             StatsD::Instrument::BatchedUDPSink.for_addr(
