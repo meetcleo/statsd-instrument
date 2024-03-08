@@ -127,7 +127,7 @@ module StatsD
       end
 
       def prometheus_percentiles
-        env.fetch("STATSD_PROMETHEUS_PERCENTILES", "95,99").split(",").map(&:to_i)
+        env.fetch("STATSD_PROMETHEUS_PERCENTILES", "").split(",").map(&:to_i)
       end
 
       def prometheus_histograms
