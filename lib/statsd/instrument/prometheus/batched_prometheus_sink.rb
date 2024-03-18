@@ -35,7 +35,8 @@ module StatsD
           max_fill_ratio:,
           basic_auth_user:,
           histograms:,
-          dyno_number:
+          dyno_number:,
+          worker_index:
         )
           dispatcher = PeriodicDispatcher.new(
             nil,
@@ -56,6 +57,7 @@ module StatsD
               basic_auth_user,
               histograms,
               dyno_number,
+              worker_index,
             ),
             seconds_to_sleep,
             seconds_between_flushes,

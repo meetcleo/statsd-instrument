@@ -10,6 +10,7 @@ module Prometheus
         nil,
         nil,
         nil,
+        nil,
       )
       output = serializer.run
       decoded_output = ::Prometheus::WriteRequest.decode(output)
