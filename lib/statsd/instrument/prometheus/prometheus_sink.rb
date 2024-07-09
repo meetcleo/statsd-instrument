@@ -15,7 +15,7 @@ module StatsD
           end
 
           def close_socket(socket)
-            socket&.finish
+            socket&.close
           end
 
           def thread_name

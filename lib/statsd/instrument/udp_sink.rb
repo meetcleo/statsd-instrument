@@ -55,7 +55,7 @@ module StatsD
         retried = false
         begin
           yield
-        rescue SocketError, IOError, SystemCallError, Net::OpenTimeout, Errno::CONNREFUSED, HTTPX::HTTPError => error
+        rescue SocketError, IOError, SystemCallError, Net::OpenTimeout, Errno::ECONNREFUSED, HTTPX::HTTPError => error
           StatsD.logger.debug do
             "[StatsD::Instrument::UDPSink] Resetting connection because of #{error.class}: #{error.message}"
           end
@@ -66,7 +66,7 @@ module StatsD
             end
           else
             retried = true
-            retry
+            retry if retries_allowed?
           end
         end
       end
@@ -88,6 +88,10 @@ module StatsD
 
       def thread_store
         Thread.current[self.class.thread_name] ||= {}
+      end
+
+      def retries_allowed?
+        true
       end
     end
   end
