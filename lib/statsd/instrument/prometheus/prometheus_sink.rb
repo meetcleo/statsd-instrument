@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "snappy"
+require "httpx"
 
 module StatsD
   module Instrument
@@ -66,12 +67,13 @@ module StatsD
           invalidate_socket_and_retry_if_error do
             @number_of_requests_attempted += 1
             response = make_request(datagram)
-            if ["201", "200"].include?(response.code)
+            if [201, 200].include?(response.status)
               @number_of_requests_succeeded += 1
             else
               StatsD.logger.warn do
-                "[#{self.class.name}] Events were dropped because of response code from Prometheus: #{response.code}"
+                "[#{self.class.name}] Events were dropped because of response status from Prometheus: #{response.status}"
               end
+              response.raise_for_status # https://honeyryderchuck.gitlab.io/httpx/wiki/Error-Handling#error-pattern-matching
             end
           end
           @last_flush_initiated_time = current_flush_initiated_time
@@ -108,24 +110,23 @@ module StatsD
         end
 
         def make_request(datagram)
-          request = Net::HTTP::Post.new(uri.request_uri)
-          if basic_auth_user
-            request.basic_auth(basic_auth_user, auth_key)
-          else
-            request["Authorization"] = "Bearer #{auth_key}"
-          end
-          request.body = request_body(datagram)
-          socket.request(request)
+          socket.post(uri.request_uri, body: request_body(datagram))
         end
 
         def build_socket
-          socket = Net::HTTP.new(uri.host, uri.port)
-          socket.open_timeout = open_timeout
-          socket.read_timeout = read_timeout
-          socket.write_timeout = write_timeout
-          socket.use_ssl = true
-          socket.start
+          socket = if basic_auth_user
+            HTTPX
+              .plugin(:basic_auth)
+              .basic_auth(basic_auth_user, auth_key)
+          else
+            HTTPX
+              .plugin(:auth)
+              .bearer_auth(auth_key)
+          end
+
           socket
+            .with(origin: uri.origin)
+            .with(timeout: { connect_timeout: open_timeout, write_timeout: write_timeout, read_timeout: read_timeout })
         end
       end
     end

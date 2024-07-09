@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "webmock"
+require "httpx/adapters/webmock"
 require "webmock/minitest"
 
 module Prometheus

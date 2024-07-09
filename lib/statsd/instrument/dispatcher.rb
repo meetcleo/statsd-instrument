@@ -44,7 +44,7 @@ module StatsD
 
         StatsD.logger.warn do
           "[#{self.class.name}] Failed to buffer event, thread_healthcheck: #{thread_healthcheck}, buffer_closed? #{@buffer.closed?}, buffer_empty? #{@buffer.empty?}, buffer_size #{@buffer.size}, buffer_max #{@buffer.max}"
-        end
+        end unless @interrupted
 
         result
       end
