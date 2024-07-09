@@ -26,4 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'google-protobuf'
   # For compressing data sent to Prometheus
   spec.add_dependency 'snappy'
+  # For making requests to Prometheus
+  spec.add_dependency 'httpx'
 end

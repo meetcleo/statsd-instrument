@@ -55,7 +55,7 @@ module StatsD
         retried = false
         begin
           yield
-        rescue SocketError, IOError, SystemCallError, Net::OpenTimeout => error
+        rescue SocketError, IOError, SystemCallError, Net::OpenTimeout, Errno::CONNREFUSED, HTTPX::HTTPError => error
           StatsD.logger.debug do
             "[StatsD::Instrument::UDPSink] Resetting connection because of #{error.class}: #{error.message}"
           end
