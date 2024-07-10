@@ -119,6 +119,7 @@ module StatsD
           end
 
           socket
+            .plugin(:persistent)
             .with(origin: uri.origin)
             .with(timeout: { connect_timeout: open_timeout, write_timeout: write_timeout, read_timeout: read_timeout })
         end
