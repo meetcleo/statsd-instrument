@@ -99,5 +99,12 @@ module Prometheus
       StatsD.singleton_client.sink.shutdown
       assert_request_contents(TEST_URL, expected, expected_headers: { "Authorization" => "Bearer abc" })
     end
+
+    def test_request_failure
+      stub_request(:post, TEST_URL).to_return(status: 401)
+      StatsD.increment("counter", tags: { source: "App::Main::Controller", dyno_number: "1", worker_index: "0" })
+      StatsD::Instrument::Prometheus::PrometheusSink.any_instance.expects(:retries_allowed?).returns(false)
+      StatsD.singleton_client.sink.shutdown
+    end
   end
 end
