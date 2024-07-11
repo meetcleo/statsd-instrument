@@ -51,6 +51,12 @@ module StatsD
 
       private
 
+      def log_events_dropped(error)
+        StatsD.logger.warn do
+          "[#{self.class.name}] Events were dropped because of #{error.class}: #{error.message}"
+        end
+      end
+
       def invalidate_socket_and_retry_if_error
         retried = false
         begin
@@ -61,13 +67,13 @@ module StatsD
           end
           invalidate_socket
           if retried
-            StatsD.logger.warn do
-              "[#{self.class.name}] Events were dropped because of #{error.class}: #{error.message}"
-            end
+            log_events_dropped(error)
           else
             retried = true
             retry if retries_allowed?
           end
+        rescue ThreadError => error
+          log_events_dropped(error)
         end
       end
 
