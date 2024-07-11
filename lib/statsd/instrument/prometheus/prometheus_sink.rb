@@ -67,14 +67,8 @@ module StatsD
           invalidate_socket_and_retry_if_error do
             @number_of_requests_attempted += 1
             response = make_request(datagram)
-            if [201, 200].include?(response.status)
-              @number_of_requests_succeeded += 1
-            else
-              StatsD.logger.warn do
-                "[#{self.class.name}] Events were dropped because of response status from Prometheus: #{response.status}"
-              end
-              response.raise_for_status # https://honeyryderchuck.gitlab.io/httpx/wiki/Error-Handling#error-pattern-matching
-            end
+            response.raise_for_status # https://honeyryderchuck.gitlab.io/httpx/wiki/Error-Handling#error-pattern-matching
+            @number_of_requests_succeeded += 1
           end
           @last_flush_initiated_time = current_flush_initiated_time
           self
@@ -125,6 +119,7 @@ module StatsD
           end
 
           socket
+            .plugin(:persistent)
             .with(origin: uri.origin)
             .with(timeout: { connect_timeout: open_timeout, write_timeout: write_timeout, read_timeout: read_timeout })
         end

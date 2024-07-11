@@ -5,7 +5,7 @@ require:
   - ./lib/statsd/instrument/rubocop.rb
 
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.3
   UseCache: true
   SuggestExtensions: false
   CacheRootDirectory: /tmp/rubocop

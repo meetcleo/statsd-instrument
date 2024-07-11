@@ -51,23 +51,29 @@ module StatsD
 
       private
 
+      def log_events_dropped(error)
+        StatsD.logger.warn do
+          "[#{self.class.name}] Events were dropped because of #{error.class}: #{error.message}"
+        end
+      end
+
       def invalidate_socket_and_retry_if_error
         retried = false
         begin
           yield
-        rescue SocketError, IOError, SystemCallError, Net::OpenTimeout, Errno::ECONNREFUSED, HTTPX::HTTPError => error
+        rescue SocketError, IOError, SystemCallError, Net::OpenTimeout, Errno::ECONNREFUSED, HTTPX::Error => error
           StatsD.logger.debug do
             "[StatsD::Instrument::UDPSink] Resetting connection because of #{error.class}: #{error.message}"
           end
           invalidate_socket
           if retried
-            StatsD.logger.warn do
-              "[#{self.class.name}] Events were dropped because of #{error.class}: #{error.message}"
-            end
+            log_events_dropped(error)
           else
             retried = true
             retry if retries_allowed?
           end
+        rescue ThreadError => error
+          log_events_dropped(error)
         end
       end
 
